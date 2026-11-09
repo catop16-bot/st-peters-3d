@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { EXHIBITS } from './Exhibits';
+import { navPath, Polyline } from './nav';
 
 /**
  * 線上博物館式導覽：
@@ -16,7 +17,7 @@ export class TourController {
   private pitch = 0;
   private fov = 60;
   private pos = new THREE.Vector3();
-  private tween: { p0: THREE.Vector3; p1: THREE.Vector3; q0: THREE.Quaternion; q1: THREE.Quaternion; f0: number; f1: number; t: number; dur: number } | null = null;
+  private tween: { path: Polyline; p1: THREE.Vector3; q0: THREE.Quaternion; q1: THREE.Quaternion; f0: number; f1: number; t: number; dur: number } | null = null;
   private dragging = false;
   private moved = 0;
   private last = { x: 0, y: 0 };
@@ -26,6 +27,10 @@ export class TourController {
   onSelect: ((i: number) => void) | null = null;
   onHover: ((i: number | null) => void) | null = null;
   pickables: THREE.Object3D[] = [];
+  /** 目前路線（依官方平面圖參觀順序）；精選路線為其子集 */
+  route: number[] = EXHIBITS.map((_, i) => i);
+  get position() { return this.pos; }
+  get heading() { return this.yaw; }
 
   constructor(private camera: THREE.PerspectiveCamera, private dom: HTMLElement) {
     dom.addEventListener('pointerdown', (e) => {
@@ -111,22 +116,34 @@ export class TourController {
     const p1 = new THREE.Vector3(...e.station);
     const d = new THREE.Vector3(...e.look).sub(p1).normalize();
     const yaw1 = Math.atan2(-d.x, -d.z), pitch1 = Math.asin(THREE.MathUtils.clamp(d.y, -1, 1));
-    const dist = this.pos.distanceTo(p1);
+    const path = new Polyline(navPath(this.pos, p1));
+    const dist = path.length;
     this.tween = {
-      p0: this.pos.clone(), p1,
+      path, p1,
       q0: this.quatFor(this.yaw, this.pitch), q1: this.quatFor(yaw1, pitch1),
       f0: this.fov, f1: e.fov ?? 60,
-      t: 0, dur: THREE.MathUtils.clamp(1.4 + dist / 28, 1.6, 5.5),
+      t: 0, dur: THREE.MathUtils.clamp(1.4 + dist / 26, 1.6, 7),
     };
     this.yaw = yaw1; this.pitch = pitch1;
   }
 
   next(dir: number) {
-    const n = EXHIBITS.length;
-    this.goTo(((this.active < 0 ? (dir > 0 ? -1 : 0) : this.active) + dir + n) % n);
+    const r = this.route, n = r.length;
+    const k = r.indexOf(this.active);
+    if (k < 0) {
+      // 不在路線上：前往路線中離目前展品最近的下一站
+      const after = r.find((i) => i > this.active);
+      this.goTo(dir > 0 ? (after ?? r[0]) : r[n - 1]);
+      return;
+    }
+    this.goTo(r[(k + dir + n) % n]);
   }
 
-  startAuto() { this.autoTour = true; this.dwell = 0; this.next(1); }
+  startAuto(route?: number[]) {
+    if (route) this.route = route;
+    this.autoTour = true; this.dwell = 0;
+    if (this.route.includes(this.active)) this.goTo(this.active); else this.next(1);
+  }
   stopAuto() { this.autoTour = false; }
 
   update(dt: number) {
@@ -134,7 +151,7 @@ export class TourController {
       const tw = this.tween;
       tw.t = Math.min(1, tw.t + dt / tw.dur);
       const e = tw.t < 0.5 ? 4 * tw.t ** 3 : 1 - Math.pow(-2 * tw.t + 2, 3) / 2;
-      this.pos.lerpVectors(tw.p0, tw.p1, e);
+      tw.path.at(e, this.pos);
       this.camera.quaternion.slerpQuaternions(tw.q0, tw.q1, THREE.MathUtils.smoothstep(tw.t, 0.05, 0.85));
       this.camera.position.copy(this.pos);
       this.fov = THREE.MathUtils.lerp(tw.f0, tw.f1, e);

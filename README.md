@@ -31,8 +31,10 @@ npm run build      # 輸出靜態網站到 dist/
 
 在外部雙擊大教堂（或面板的「進入教堂內部」），經「光之門」轉場進入內部：
 
-- `src/interior/Interior.ts`：依真實尺寸建模的中殿、側廊、交叉處（帆拱、鼓座、穹頂、銘文帶）、翼殿與後殿
-- `src/interior/Exhibits.ts`：十件展品的資料與程式建模（`modelUrl` 預留換成 glTF 掃描）
+- `src/interior/Interior.ts`：依真實尺寸建模的柱廊、中殿、側廊（含兩座轉角禮拜堂穹頂）、交叉處（帆拱、鼓座、穹頂、銘文帶）、翼殿與後殿
+- `src/interior/exhibitsData.ts`：31 件真實展品的解說、分區、導覽點與資料來源網址（依 stpetersbasilica.info 官方平面圖順序）
+- `src/interior/Exhibits.ts`：展品與祭台的程式建模（`modelUrl` 預留換成 glTF 掃描）
+- `src/interior/nav.ts`：導覽移動的避障路徑（不穿牆、不穿柱）
 - `src/interior/Lighting.ts`：依外部太陽方向的光束、地面光斑、微塵、夜間燈光
-- `src/interior/TourController.ts`、`InteriorUI.ts`：導覽點滑行、拖曳環視、依序導覽、解說卡
+- `src/interior/TourController.ts`、`InteriorUI.ts`：導覽點滑行、拖曳環視、精選／完整路線、分區目錄、解說卡（附資料來源）、小平面圖
 - `src/interior/InteriorMode.ts`：進出轉場與場景切換；轉場效果在 `core/Renderer.ts` 的 `PortalEffect`

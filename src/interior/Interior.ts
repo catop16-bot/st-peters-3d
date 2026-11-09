@@ -29,6 +29,10 @@ export const IN = {
   shellTop: 108,
   lanternTop: 117.6,
   bayW: 14,
+  wallT: 2, // 入口牆厚度
+  porticoX1: 131, // 柱廊外牆（立面內側）
+  porticoHalfL: 36, // 柱廊半長
+  vestibule: 46, // 兩端騎馬像所在的端廳外緣
 };
 
 export interface InteriorMats {
@@ -138,6 +142,7 @@ export interface InteriorBuild {
   drumWindows: { pos: THREE.Vector3; normal: THREE.Vector3 }[];
   naveWindows: { pos: THREE.Vector3; normal: THREE.Vector3 }[];
   confessio: { x0: number; x1: number; hw: number; depth: number };
+  portico: { x0: number; x1: number; halfL: number; vest: number };
 }
 
 export function buildInterior(M: MaterialLibrary): InteriorBuild {
@@ -150,7 +155,7 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
 
   // ── 地面（含告解堂下沉區開口）──
   const confessio = { x0: 6, x1: 13.5, hw: 5.2, depth: 3.2 };
-  const floorOuter: Vec2[] = [[-70, -72], [122, -72], [122, 72], [-70, 72]];
+  const floorOuter: Vec2[] = [[-70, -72], [IN.naveEnd, -72], [IN.naveEnd, 72], [-70, 72]];
   const hole: Vec2[] = [[confessio.x0, -confessio.hw], [confessio.x1, -confessio.hw], [confessio.x1, confessio.hw], [confessio.x0, confessio.hw]];
   b.add(mats.floor, flatPolygon(floorOuter, [hole], 0));
   // 告解堂：下沉的馬蹄形空間（簡化為矩形），四壁大理石
@@ -214,6 +219,7 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
     b.add(mats.stucco, inward(flatPolygon(ceilOuter, ceilHoles, IN.aisleCeil)));
     for (let i = 0; i < bays; i++) {
       const x = IN.pierOuter + (i + 0.5) * IN.bayW;
+      if (i === 0) { cornerDome(b, mats, x, cz); continue; } // 轉角禮拜堂（額我略 / 克勉）
       const d = inward(lathe([[6.2, IN.aisleCeil - 0.01], [5.9, IN.aisleCeil + 2.2], [4.6, IN.aisleCeil + 4.4], [2.4, IN.aisleCeil + 5.8], [0.01, IN.aisleCeil + 6.3]], 32, x, cz));
       b.add(mats.stucco, d);
       b.add(mats.gold, lathe([[6.4, IN.aisleCeil - 0.4], [6.4, IN.aisleCeil], [6.1, IN.aisleCeil], [6.1, IN.aisleCeil - 0.4]], 32, x, cz));
@@ -403,19 +409,30 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
     }
   }
 
-  // ── 入口內牆（中央大門與聖門所在）──
+  // ── 入口牆（厚 2 m）：中央大門敞開通往柱廊，其餘四扇大門關閉 ──
+  const portico = buildPortico(b, mats);
   {
-    const g = new THREE.PlaneGeometry(2 * IN.aisleOuter, IN.spring + W);
-    g.rotateY(-Math.PI / 2);
-    g.translate(IN.naveEnd, (IN.spring + W) / 2, 0);
+    const Hw = IN.spring + W, half = 46;
+    const sh = new THREE.Shape();
+    sh.moveTo(-half, 0); sh.lineTo(half, 0); sh.lineTo(half, Hw); sh.lineTo(-half, Hw); sh.closePath();
+    sh.holes.push(new THREE.Path(archShape(3.0, 11).getPoints(16)));
+    const g = new THREE.ExtrudeGeometry(sh, { depth: IN.wallT, bevelEnabled: false, curveSegments: 16 });
+    g.rotateY(Math.PI / 2); // shape x → −z、擠出 → +x
+    g.translate(IN.naveEnd, 0, 0);
     b.add(mats.marble, g);
-    for (const [z, hw, h] of [[0, 3.0, 11], [-25, 2.2, 8], [25, 2.2, 8]] as [number, number, number][]) {
-      const d = new THREE.ShapeGeometry(archShape(hw, h), 12);
-      d.rotateY(-Math.PI / 2);
-      d.translate(IN.naveEnd - 0.05, 0, z);
-      b.add(mats.bronze, d);
-      const fr = boxAt(0.6, h, h + 0.8, hw * 2 + 1.2, IN.naveEnd - 0.3, z);
-      b.add(mats.gold, fr);
+    // 中央門洞的門框內壁（金色）
+    b.add(mats.gold, boxAt(IN.wallT + 0.4, 11, 11.6, 7.2, IN.naveEnd + IN.wallT / 2, 0));
+    for (const s of [-1, 1]) b.add(mats.gold, boxAt(IN.wallT + 0.4, 0, 11, 0.5, IN.naveEnd + IN.wallT / 2, s * 3.25));
+    // 四扇關閉的門：兩面皆為青銅門扇（聖門 z = −25 另有浮雕）
+    for (const [z, hw, h] of [[-8.5, 2.2, 8], [8.5, 2.2, 8], [-25, 2.2, 8], [25, 2.2, 8]] as [number, number, number][]) {
+      for (const [x, ry] of [[IN.naveEnd - 0.05, -Math.PI / 2], [IN.naveEnd + IN.wallT + 0.05, Math.PI / 2]] as [number, number][]) {
+        const d = new THREE.ShapeGeometry(archShape(hw, h), 12);
+        d.rotateY(ry);
+        d.translate(x, 0, z);
+        b.add(mats.bronze, d);
+      }
+      b.add(mats.gold, boxAt(0.6, h, h + 0.8, hw * 2 + 1.2, IN.naveEnd - 0.3, z));
+      b.add(mats.gold, boxAt(0.6, h, h + 0.8, hw * 2 + 1.2, IN.naveEnd + IN.wallT + 0.3, z));
     }
     // 入口上方的大窗
     const ww = new THREE.ShapeGeometry(archShape(4.5, 12), 16);
@@ -432,5 +449,75 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
   }
 
   b.build(scene, { cast: false, receive: false });
-  return { scene, mats, drumWindows, naveWindows, confessio };
+  return { scene, mats, drumWindows, naveWindows, confessio, portico };
+}
+
+/**
+ * 轉角禮拜堂（額我略、克勉）：側廊靠交叉部的第一開間，鼓座 + 高穹頂（額我略禮拜堂穹頂高約 42 m）
+ */
+function cornerDome(b: GeoBucket, mats: InteriorMats, x: number, cz: number) {
+  const r = 6.2, y0 = IN.aisleCeil, y1 = 31, top = 38.5;
+  b.add(mats.marble, inward(cylAt(r, r, y0, y1, x, cz, 48, true)));
+  for (let k = 0; k < 8; k++) {
+    const a = ((k + 0.5) / 8) * Math.PI * 2;
+    const w = new THREE.PlaneGeometry(1.6, 4.2);
+    w.rotateY(Math.atan2(-Math.cos(a), -Math.sin(a)));
+    w.translate(x + Math.cos(a) * (r - 0.05), y0 + 4.6, cz + Math.sin(a) * (r - 0.05));
+    b.add(mats.window, w);
+  }
+  const prof: [number, number][] = [];
+  for (let i = 0; i <= 16; i++) { const t = (i / 16) * Math.PI / 2; prof.push([1.1 + (r - 1.1) * Math.cos(t), y1 + (top - y1) * Math.sin(t)]); }
+  b.add(mats.stucco, inward(lathe(prof, 48, x, cz)));
+  b.add(mats.stucco, inward(cylAt(1.1, 1.1, top, 41.5, x, cz, 16, true)));
+  b.add(mats.window, inward(lathe([[1.1, 41.5], [0.01, 42]], 16, x, cz)));
+  for (const y of [y0 - 0.4, y1 - 0.4]) b.add(mats.gold, lathe([[r + 0.2, y], [r + 0.2, y + 0.4], [r - 0.3, y + 0.4], [r - 0.3, y]], 48, x, cz));
+}
+
+/**
+ * 柱廊（前廊）：入口牆外到立面內側，長約 72 m；筒形拱頂、五個朝向廣場的拱洞，
+ * 兩端為端廳（北：君士坦丁像，國王階梯腳下；南：查理曼像）。
+ */
+function buildPortico(b: GeoBucket, mats: InteriorMats) {
+  const x0 = IN.naveEnd + IN.wallT, x1 = IN.porticoX1, L = IN.porticoHalfL, V = IN.vestibule;
+  const cx = (x0 + x1) / 2, r = (x1 - x0) / 2, spring = 13;
+  b.add(mats.floor, flatPolygon([[IN.naveEnd, -V], [x1, -V], [x1, V], [IN.naveEnd, V]], [], 0));
+  // 立面內側牆：五個拱洞，洞外為廣場天光
+  const H = spring + r + 0.5;
+  const sh = new THREE.Shape();
+  sh.moveTo(-V, 0); sh.lineTo(V, 0); sh.lineTo(V, H); sh.lineTo(-V, H); sh.closePath();
+  const openings: [number, number, number][] = [[0, 3.2, 9], [-13, 2.6, 8], [13, 2.6, 8], [-26, 2.6, 8], [26, 2.6, 8]];
+  for (const [z, hw, h] of openings) sh.holes.push(new THREE.Path(archShape(hw, h).getPoints(16).map((p) => new THREE.Vector2(p.x - z, p.y))));
+  const fw = new THREE.ExtrudeGeometry(sh, { depth: 1.5, bevelEnabled: false, curveSegments: 16 });
+  fw.rotateY(Math.PI / 2);
+  fw.translate(x1, 0, 0);
+  b.add(mats.marble, fw);
+  for (const [z, hw, h] of openings) {
+    const g = new THREE.ShapeGeometry(archShape(hw + 0.2, h + 0.2), 12);
+    g.rotateY(-Math.PI / 2);
+    g.translate(x1 + 1.4, 0, z);
+    b.add(mats.window, g);
+  }
+  // 筒形拱頂（沿 z）與兩端牆（大拱通往端廳）
+  b.add(mats.stucco, barrelVault('z', -L, L, r, spring, cx));
+  for (const s of [-1, 1]) {
+    const e = new THREE.Shape();
+    e.moveTo(x0, 0); e.lineTo(x1, 0); e.lineTo(x1, H); e.lineTo(x0, H); e.closePath();
+    e.holes.push(new THREE.Path(archShape(4.2, 11.5).getPoints(16).map((p) => new THREE.Vector2(p.x + cx, p.y))));
+    const eg = new THREE.ExtrudeGeometry(e, { depth: 1.2, bevelEnabled: false, curveSegments: 16 });
+    eg.translate(0, 0, s > 0 ? L : -L - 1.2);
+    b.add(mats.marble, eg);
+    // 端廳：平頂與後牆
+    const z0 = s * (L + 1.2), z1 = s * V;
+    b.add(mats.stucco, inward(flatPolygon([[x0, Math.min(z0, z1)], [x1, Math.min(z0, z1)], [x1, Math.max(z0, z1)], [x0, Math.max(z0, z1)]], [], 14)));
+    const bw = new THREE.PlaneGeometry(x1 - x0, 14);
+    bw.translate(cx, 7, z1);
+    b.add(mats.marble, s > 0 ? inward(bw) : bw);
+  }
+  // 拱頂橫向金色肋
+  for (let z = -L + 6; z < L; z += 12) {
+    const t = new THREE.TorusGeometry(r - 0.05, 0.25, 6, 32, Math.PI);
+    t.translate(cx, spring, z);
+    b.add(mats.gold, t);
+  }
+  return { x0, x1, halfL: L, vest: V };
 }

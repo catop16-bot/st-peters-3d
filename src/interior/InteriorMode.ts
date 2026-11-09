@@ -123,6 +123,7 @@ export class InteriorMode {
     if (this.mode === 'interior') {
       this.lighting.update(this.d.env);
       this.exhibits.update(G.uTime.value, this.tour.active);
+      this.ui.update();
     }
     const tl = this.tl;
     if (!tl) {
@@ -144,7 +145,7 @@ export class InteriorMode {
       if (!tl.swapped) { tl.swapped = true; this.swapTo('interior'); R.portal.setCenter(0.5, 0.52); }
       const k = THREE.MathUtils.clamp((tl.t - B) / (C - B), 0, 1);
       R.portal.progress = 1 - ease(k);
-      this.tour.setPose(new THREE.Vector3(THREE.MathUtils.lerp(115.5, 107, ease(k)), THREE.MathUtils.lerp(3.2, 1.7, ease(k)), 0), new THREE.Vector3(0, 24, 0), THREE.MathUtils.lerp(80, 66, ease(k)));
+      this.tour.setPose(new THREE.Vector3(THREE.MathUtils.lerp(126, 107, ease(k)), THREE.MathUtils.lerp(3.2, 1.7, ease(k)), 0), new THREE.Vector3(0, 24, 0), THREE.MathUtils.lerp(80, 66, ease(k)));
       if (k >= 1) { R.portal.progress = 0; this.tl = null; }
       return true;
     }
@@ -152,9 +153,9 @@ export class InteriorMode {
     const A = 0.95, C = 3.3;
     if (tl.t < A) {
       const k = ease(tl.t / A);
-      const doorIn = new THREE.Vector3(116, 5, 0);
+      const doorIn = new THREE.Vector3(126, 4, 0);
       camera.position.lerpVectors(this.exitPose.pos, doorIn, k);
-      camera.lookAt(this.exitPose.look.clone().lerp(new THREE.Vector3(130, 5, 0), k));
+      camera.lookAt(this.exitPose.look.clone().lerp(new THREE.Vector3(140, 4, 0), k));
       R.portal.progress = THREE.MathUtils.smoothstep(tl.t, 0.05, A);
       R.portal.setCenter(0.5, 0.5);
       return true;
