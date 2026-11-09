@@ -305,8 +305,10 @@ export class Environment {
     const lightMat = new THREE.Matrix4().lookAt(new THREE.Vector3(), this.lightDir.clone().negate(), new THREE.Vector3(0, 1, 0));
     const inv = lightMat.clone().invert();
     focus.applyMatrix4(inv);
-    focus.x = Math.round(focus.x / texel) * texel;
-    focus.y = Math.round(focus.y / texel) * texel;
+    // 焦點以「陰影範圍的 4%」為格距對齊（仍是 texel 的整數倍）：相機小幅移動時不必每幀重繪陰影
+    const step = texel * Math.max(1, Math.round((shadowSize * 0.04) / texel));
+    focus.x = Math.round(focus.x / step) * step;
+    focus.y = Math.round(focus.y / step) * step;
     focus.applyMatrix4(lightMat);
     this.sun.target.position.copy(focus);
     this.sun.position.copy(focus).addScaledVector(this.lightDir, 1200);

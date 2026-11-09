@@ -62,6 +62,8 @@ class AutoExposure {
   highLum = 1; // 95 百分位亮度
   private counter = 0;
   private snapNext = true;
+  private pending = false;
+  private night = 0;
   every = 4; // 每幾幀測光一次
 
   constructor() {
@@ -104,8 +106,33 @@ class AutoExposure {
       const prev = renderer.getRenderTarget();
       renderer.setRenderTarget(this.rt);
       renderer.render(this.scene, this.cam);
-      renderer.readRenderTargetPixels(this.rt, 0, 0, 64, 36, this.buf);
       renderer.setRenderTarget(prev);
+      this.night = night;
+      // 非同步讀回（WebGL2），避免同步讀取造成 GPU 管線停頓；不支援時退回同步
+      const r = renderer as THREE.WebGLRenderer & { readRenderTargetPixelsAsync?: (...a: unknown[]) => Promise<unknown> };
+      if (r.readRenderTargetPixelsAsync && !this.snapNext) {
+        if (!this.pending) {
+          this.pending = true;
+          r.readRenderTargetPixelsAsync(this.rt, 0, 0, 64, 36, this.buf).then(() => { this.pending = false; this.measure(); }, () => { this.pending = false; });
+        }
+      } else {
+        renderer.setRenderTarget(this.rt);
+        renderer.readRenderTargetPixels(this.rt, 0, 0, 64, 36, this.buf);
+        renderer.setRenderTarget(prev);
+        this.measure();
+      }
+    }
+    if (this.snapNext) { this.value = this.target; this.snapNext = false; return; }
+    // 在對數空間平滑適應：變暗（瞳孔收縮）較快，變亮較慢
+    const lv = Math.log(this.value), lt = Math.log(this.target);
+    const rate = lt < lv ? 3.0 : 1.8;
+    this.value = Math.exp(lv + (lt - lv) * (1 - Math.exp(-dt * rate)));
+  }
+
+  /** 由讀回的對數亮度計算目標曝光 */
+  private measure() {
+    const night = this.night;
+    {
       let sum = 0, ws = 0;
       for (let i = 0; i < 64 * 36; i++) {
         let v = THREE.DataUtils.fromHalfFloat(this.buf[i * 4]);
@@ -126,11 +153,6 @@ class AutoExposure {
       const byHighlight = THREE.MathUtils.lerp(2.1, 2.8, night) / Math.max(this.highLum, 1e-5); // 曝光後約 2 在 ACES 下接近白但仍有層次
       this.target = THREE.MathUtils.clamp(Math.min(byMean, byHighlight), 0.1, 8);
     }
-    if (this.snapNext) { this.value = this.target; this.snapNext = false; return; }
-    // 在對數空間平滑適應：變暗（瞳孔收縮）較快，變亮較慢
-    const lv = Math.log(this.value), lt = Math.log(this.target);
-    const rate = lt < lv ? 3.0 : 1.8;
-    this.value = Math.exp(lv + (lt - lv) * (1 - Math.exp(-dt * rate)));
   }
 }
 
@@ -192,6 +214,7 @@ export class Renderer {
   /** 光之門轉場效果（跨畫質切換保留同一個實例的狀態） */
   portal = new PortalEffect();
   private portalPass: EffectPass | null = null;
+  private mainPass: EffectPass | null = null;
   readonly autoExposure = new AutoExposure();
   renderer: THREE.WebGLRenderer;
   composer!: EffectComposer;
@@ -249,16 +272,27 @@ export class Renderer {
     this.bloom = new BloomEffect({ luminanceThreshold: 1.6, luminanceSmoothing: 0.3, intensity: 0.7, mipmapBlur: true, radius: 0.7 });
     const effects: Effect[] = [this.exposure, this.bloom, new ToneMappingEffect({ mode: ToneMappingMode.ACES_FILMIC }), (this.grade = new GradeEffect(0.1, 0.08)), new VignetteEffect({ offset: 0.3, darkness: 0.4 })];
     effects.push(new SMAAEffect());
-    this.composer.addPass(new EffectPass(this.camera, ...effects));
+    this.mainPass = new EffectPass(this.camera, ...effects);
+    this.composer.addPass(this.mainPass);
     // 轉場效果需讀取鄰近像素（卷積），必須獨立成一個 pass
     const prevProgress = this.portal.progress;
     this.portal = new PortalEffect();
     this.portal.progress = prevProgress;
     this.portalPass = new EffectPass(this.camera, this.portal);
     this.composer.addPass(this.portalPass);
+    this.syncPortal(true);
     this.renderer.shadowMap.autoUpdate = false;
     this.renderer.shadowMap.needsUpdate = true;
     this.resize();
+  }
+
+  /** 轉場效果只在轉場期間啟用（平時省下一個全螢幕 pass） */
+  private syncPortal(force = false) {
+    const on = this.portal.progress > 0.0005;
+    if (!this.portalPass || !this.mainPass || (!force && on === this.portalPass.enabled)) return;
+    this.portalPass.enabled = on;
+    this.portalPass.renderToScreen = on;
+    this.mainPass.renderToScreen = !on;
   }
 
   /** 切換要算圖的場景（外部廣場 ↔ 教堂內部） */
@@ -295,6 +329,7 @@ export class Renderer {
     // 泛光門檻以「曝光後」亮度計算：只有燈具、窗光、強烈反光才會泛光
     this.bloom.luminanceMaterial.threshold = 1.6 / Math.max(this.autoExposure.value * bias, 1e-3);
     this.portal.aspect = this.camera.aspect;
+    this.syncPortal();
     this.composer.render(dt);
     // 以本幀 HDR 畫面（曝光前）測光，供下一幀使用
     const src = this.composer.inputBuffer;

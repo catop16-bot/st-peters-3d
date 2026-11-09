@@ -4,7 +4,7 @@
  * 解說只寫多個來源一致的事實，來源互相矛盾處以「一說」標註或不寫。
  * 座標為大教堂本地座標：原點穹頂中心、+X 朝入口（東）、z<0 為北（入內後的右側）、地坪 y = 0。
  */
-export type Zone = 'portico' | 'nave' | 'saisle' | 'crossing' | 'stransept' | 'apse' | 'ntransept' | 'naisle';
+export type Zone = 'portico' | 'nave' | 'saisle' | 'crossing' | 'stransept' | 'swchapel' | 'apse' | 'nwchapel' | 'ntransept' | 'naisle';
 
 export const ZONES: { id: Zone; name: string }[] = [
   { id: 'portico', name: '柱廊（前廊）' },
@@ -12,7 +12,9 @@ export const ZONES: { id: Zone; name: string }[] = [
   { id: 'saisle', name: '左側廊' },
   { id: 'crossing', name: '穹頂與交叉部' },
   { id: 'stransept', name: '左耳堂' },
+  { id: 'swchapel', name: '圓柱聖母禮拜堂一帶' },
   { id: 'apse', name: '後殿' },
+  { id: 'nwchapel', name: '聖彌額爾禮拜堂一帶' },
   { id: 'ntransept', name: '右耳堂' },
   { id: 'naisle', name: '中殿右側與右側廊' },
 ];
@@ -30,6 +32,8 @@ export interface Exhibit {
   featured?: boolean; // 精選路線
   sources: string[];
   modelUrl?: string; // 預留：之後替換為真實 3D 掃描（glTF）
+  /** 經查證出處與授權的真實 3D 掃描（僅作補充檢視，不取代場景中的全尺寸造型） */
+  scan?: { url: string; title: string; credit: string; license: string; source: string };
 }
 
 const SP = 'https://www.stpetersbasilica.info';
@@ -85,6 +89,18 @@ export const EXHIBITS: Exhibit[] = [
     text: '中殿第一拱下兩側各有一座聖水盆，由兩位小天使捧著黃色大理石貝殼形水盆。天使看似孩童，其實高約 2 m，走近才感受到教堂的真實尺度。製作者有 Francesco Moderati、Giuseppe Lironi 等人，各來源的分工說法不一。',
     station: [97, 1.7, -5], look: [103, 1.6, -13], hotspot: [104.2, 3.4, -12.4], fov: 55,
     sources: [`${SP}/Interior/Nave/Nave.htm`],
+  },
+  {
+    id: 'founders_s', zone: 'nave', title: '創辦人像：中殿左側', subtitle: '8 尊 · 修會創辦聖人像',
+    text: '中殿左側（南）柱面上下兩層壁龕中的修會創辦人像：Lucy Filippini（Silvio Silva，1949）、亞爾剛大拉的伯多祿 Peter of Alcantara（Francesco Vergara，1713）、Louis Grignion de Montfort（Giacomo Parisini，1948）、嘉民 Camillus de Lellis（Pietro Pacilli，1753）、Anthony Mary Zaccaria（Cesare Aureli，1909）、依納爵·羅耀拉 Ignatius Loyola（Camillo 與 Giuseppe Rusconi，1733）、保拉的方濟各 Francis of Paola（G. B. Maini，1732）、Peter Fourier（Louis Noël Nicoli，1899）。（官方位置圖只標出分區，同區內各尊對應的壁龕此處不逐一標示。）',
+    station: [54, 1.7, -4], look: [61, 10, 13.7], hotspot: [63.5, 12, 12.5], fov: 62,
+    sources: [`${SP}/Statues/Founders/FounderSaints.htm`],
+  },
+  {
+    id: 'founders_n', zone: 'nave', title: '創辦人像：中殿右側', subtitle: '7 尊 · 修會創辦聖人像',
+    text: '中殿右側（北）柱面壁龕中的修會創辦人像；最靠穹頂的下層位置是聖彼得青銅像，鮑思高像就在它上方。名單：鮑思高 John Bosco（Pietro Canonica，1936）、喇沙 John Baptist de la Salle（Cesare Aureli，1904）、斐理伯·內利 Philip Neri（G. B. Maini，1737）、味增爵 Vincent de Paul（Pietro Bracci，1754）、John Eudes（Silvio Silva，1932）、Madeleine Sophie Barat（Enrico Quattrini，1934）、大德蘭 Teresa of Jesus（Filippo Della Valle，1754）。（官方位置圖只標出分區，同區內各尊對應的壁龕此處不逐一標示。）',
+    station: [54, 1.7, 4], look: [61, 10, -13.7], hotspot: [63.5, 12, -12.5], fov: 62,
+    sources: [`${SP}/Statues/Founders/FounderSaints.htm`],
   },
   // ── 左側廊 ──
   {
@@ -142,19 +158,68 @@ export const EXHIBITS: Exhibit[] = [
     station: [23, 1.7, 1], look: [17.9, 7.5, -17.9], hotspot: [16, 12.5, -16], fov: 58, featured: true,
     sources: [`${SP}/Statues/StLonginus/StLonginus.htm`, `${SP}/Statues/StHelen/StHelen.htm`, `${SP}/Statues/StVeronica/StVeronica.htm`, `${SP}/Statues/StAndrew/StAndrew.htm`],
   },
+  {
+    id: 'founders_w', zone: 'crossing', title: '創辦人像：兩耳堂西側', subtitle: '8 尊 · 修會創辦聖人像',
+    text: '左右兩耳堂西側柱面上下兩層壁龕中的修會創辦人像：William（Giuseppe Prinzi，1878）、諾伯 Norbert（Pietro Bracci，1767）、安琪·梅利奇 Angela Merici（Pietro Galli，1866）、Juliana Falconieri（Paolo Campi，1740）、Paul of the Cross（Ignazio Iacometti，1876）、布魯諾 Bruno（Michelangelo Slodtz，1744）、Bonfilius Monaldi（Cesare Aureli，1906）、Joseph Calasanctius（Innocenzo Spinazzi，1755）。（官方位置圖只標出分區，同區內各尊對應的壁龕此處不逐一標示。）',
+    station: [1.5, 1.7, -30], look: [-13.7, 10, -28], hotspot: [-12.5, 12.5, -25], fov: 62,
+    sources: [`${SP}/Statues/Founders/FounderSaints.htm`],
+  },
+  {
+    id: 'founders_e', zone: 'crossing', title: '創辦人像：兩耳堂東側', subtitle: '8 尊 · 修會創辦聖人像',
+    text: '左右兩耳堂東側柱面上下兩層壁龕中的修會創辦人像：Joan Antida Thouret（Enrico 與 Carlo Quattrini，1949）、Jerome Emiliani（Pietro Bracci，1757）、Frances Cabrini（Enrico Tadolini，1947）、Cajetan Thiene（Carlo Monaldi，1738）、Mary Euphrasia Pelletier（Giovanni Nicolini，1942）、天主的若望 John of God（Filippo Della Valle，1745）、Louise de Marillac（Antonio Berti，1954）、Peter Nolasco（Paolo Campi，1742）。（官方位置圖只標出分區，同區內各尊對應的壁龕此處不逐一標示。）',
+    station: [-1.5, 1.7, 30], look: [13.7, 10, 28], hotspot: [12.5, 12.5, 25], fov: 62,
+    sources: [`${SP}/Statues/Founders/FounderSaints.htm`],
+  },
   // ── 左耳堂 ──
+  {
+    id: 'stransaltars', zone: 'stransept', title: '左耳堂三祭台', subtitle: '聖若瑟 · 聖多默 · 聖伯多祿倒釘十字架',
+    text: '中央是聖若瑟祭台：Achille Funi 1961 年的原畫於 1963 年製成馬賽克，同年 3 月 19 日由若望二十三世祝福；祭台下的古代石棺安放聖西滿與聖猶達·達陡的聖髑。右側是聖多默祭台，馬賽克依 Vincenzo Camuccini 的原畫描繪「多默的疑惑」，祭台下有教宗聖鮑尼法斯四世的聖髑。左側是聖伯多祿倒釘十字架祭台，馬賽克依 Guido Reni 的原畫製作，原畫今藏梵蒂岡美術館。',
+    station: [0, 1.7, 45], look: [0, 6, 68], hotspot: [2.5, 11.5, 66.5], fov: 62,
+    sources: [`${SP}/Altars/StJoseph/StJoseph.htm`, `${SP}/Altars/StThomas/StThomas.htm`, `${SP}/Altars/CrucifixionStPeter/CrucifixionStPeter.htm`],
+  },
   {
     id: 'alexander', zone: 'stransept', title: '亞歷山大七世紀念碑', subtitle: '貝尼尼 · 1671–1678 · 大理石、西西里碧玉、鍍金青銅',
     text: '貝尼尼晚年的作品，位於左（南）耳堂的外側牆，包住了一扇通往大教堂出口的門。教宗跪在高處祈禱，四周是慈愛、真理、審慎、正義四位寓意人物；下方一具鍍金青銅骷髏從紅色碧玉帷幔中探出，高舉沙漏，提醒世人生命短暫。',
     station: [4, 1.7, 40], look: [-13.7, 6.5, 40], hotspot: [-12.3, 10.5, 36.8], fov: 55, featured: true,
     sources: [`${SP}/Monuments/AlexanderVII/AlexanderVII.htm`, `${WK}Tomb_of_Pope_Alexander_VII`],
   },
+  // ── 圓柱聖母禮拜堂一帶（西南轉角） ──
+  {
+    id: 'sacredheart', zone: 'swchapel', title: '耶穌聖心祭台', subtitle: 'Carlo Muccioli 原畫 · 1920–1925 年製成馬賽克',
+    text: '位於聖維羅妮卡巨柱南側。描繪耶穌聖心向聖瑪加利大·亞拉高顯現。原畫由 Carlo Muccioli 於 1919–20 年繪製，1920–25 年製成馬賽克，取代了此處原本 Francesco Vanni 的《術士西滿墮落》；1923 年重新祝聖。',
+    station: [-37.5, 1.7, 43], look: [-37.5, 5, 33], hotspot: [-35, 9.5, 34], fov: 58,
+    sources: [`${SP}/Altars/SacredHeart/SacredHeart.htm`],
+  },
+  {
+    id: 'cripple', zone: 'swchapel', title: '聖伯多祿治癒癱子祭台', subtitle: 'Francesco Mancini 原畫（1748） · 1751–1758 年製成馬賽克',
+    text: '描繪宗徒大事錄第 3 章：伯多祿在聖殿門口治好生來瘸腿的人。原畫為 Francesco Mancini 1748 年所作，馬賽克於 1751–58 年完成。此處最早的祭壇畫是 Cigoli 1604–06 年的作品，今已失傳。',
+    station: [-40, 1.7, 48], look: [-43.5, 5, 56], hotspot: [-41, 9.5, 55], fov: 58,
+    sources: [`${SP}/Altars/StPeter-Cripple/StPeter-Cripple.htm`],
+  },
+  {
+    id: 'column', zone: 'swchapel', title: '圓柱聖母禮拜堂與祭台', subtitle: '禮拜堂：Giacomo della Porta 設計 · 聖像 1607 年安置',
+    text: '大教堂後殿一側的轉角禮拜堂，又稱聖良禮拜堂，小穹頂內飾有聖母德敘禱文的圖樣。祭台上的聖母像畫在舊聖彼得大教堂中殿的一根大理石柱上，1607 年保祿五世時安置於此，1645 年加冕；1964 年保祿六世以「教會之母」稱號尊崇她。祭台下的 4 世紀石棺中安放教宗良二世、良三世、良四世的遺骸。',
+    station: [-44, 1.7, 40], look: [-33, 5, 40], hotspot: [-34, 9.5, 42.5], fov: 60, featured: true,
+    sources: [`${SP}/Altars/ColumnChapel/ColumnChapel.htm`, `${SP}/Altars/OurLadyColumn/OurLadyColumn.htm`],
+  },
+  {
+    id: 'leo', zone: 'swchapel', title: '聖良一世祭台', subtitle: 'Alessandro Algardi · 1646–1653 · 大理石高浮雕',
+    text: '位於圓柱聖母禮拜堂右側，兩旁是黑色花崗岩柱。祭壇是一整面大理石高浮雕，刻畫教宗良一世與匈人王阿提拉會面、勸退其進攻羅馬。這是大教堂中唯一以大型大理石浮雕作為祭壇畫的祭台。',
+    station: [-45, 1.7, 48], look: [-54, 5, 44.5], hotspot: [-53, 9, 47], fov: 55,
+    sources: [`${SP}/Altars/LeotheGreat/LeotheGreat.htm`],
+  },
+  {
+    id: 'alexander8', zone: 'swchapel', title: '亞歷山大八世紀念碑', subtitle: '1725 年 · 教宗青銅像：Giuseppe Bertosi',
+    text: '從後殿走進左側迴廊時就在右手邊。由 Pietro Ottoboni 樞機委託、Arrigo di San Martino 設計，教宗青銅像由 Giuseppe Bertosi 製作，兩旁的審慎與宗教寓意像出自 Angelo de\' Rossi。基座正面浮雕描繪 1690 年 10 月 16 日五位聖人的封聖典禮。',
+    station: [-43, 1.7, 23.5], look: [-50, 4.5, 23.5], hotspot: [-49, 8.5, 26], fov: 58,
+    sources: [`${SP}/Monuments/AlexanderVIII/AlexanderVIII.htm`],
+  },
   // ── 後殿 ──
   {
-    id: 'leo', zone: 'apse', title: '聖良一世祭台', subtitle: 'Alessandro Algardi · 1646–1653 · 大理石高浮雕',
-    text: '位於圓柱聖母禮拜堂右側，兩旁是黑色花崗岩柱。祭壇是一整面大理石高浮雕，刻畫教宗良一世與匈人王阿提拉會面、勸退其進攻羅馬。這是大教堂中唯一以大型大理石浮雕作為祭壇畫的祭台。',
-    station: [-40, 1.7, 1.5], look: [-40, 5, 13.6], hotspot: [-37.5, 8.5, 12.6], fov: 55,
-    sources: [`${SP}/Altars/LeotheGreat/LeotheGreat.htm`],
+    id: 'founders_t', zone: 'apse', title: '創辦人像：後殿兩側', subtitle: '8 尊 · 修會創辦聖人像',
+    text: '後殿（祭台後方的半圓殿前段）兩側柱面壁龕中的修會創辦人像：羅馬的方濟加 Frances of Rome（Pietro Galli，1850）、本篤 Benedict（Antonio Montauti，1735）、亞豐索 Alphonsus Liguori（Pietro Tenerani，1839）、亞西西的方濟各 Francis of Assisi（Carlo Monaldi，1727）、Francis Caracciolo（Laboureur 與 Fraccaroli，1834）、道明 Dominic（Pierre Le Gros，1706）、方濟·沙雷氏 Francis de Sales（Adamo Tadolini，1845）、先知厄里亞 Elijah（Agostino Cornacchini，1727）。（官方位置圖只標出分區，同區內各尊對應的壁龕此處不逐一標示。）',
+    station: [-28, 1.7, 2.5], look: [-28, 10, 13.7], hotspot: [-25, 12.5, 12.5], fov: 62,
+    sources: [`${SP}/Statues/Founders/FounderSaints.htm`],
   },
   {
     id: 'paul3', zone: 'apse', title: '保祿三世紀念碑', subtitle: 'Guglielmo della Porta · 青銅、大理石',
@@ -174,12 +239,49 @@ export const EXHIBITS: Exhibit[] = [
     station: [-48, 1.7, 2.5], look: [-60, 4.5, -11.2], hotspot: [-58.5, 8.5, -9.5], fov: 55,
     sources: [`${SP}/Monuments/UrbanVIII/UrbanVIII.htm`],
   },
+  // ── 聖彌額爾禮拜堂一帶（西北轉角） ──
+  {
+    id: 'clement10', zone: 'nwchapel', title: '克勉十世紀念碑', subtitle: 'Mattia de\' Rossi 設計 · 教宗像：Ercole Ferrata',
+    text: '教宗坐像出自 Ercole Ferrata，兩旁的仁慈與寬仁寓意像分別由 Lazzaro Morelli 與 Giuseppe Mazzuoli 製作。基座浮雕描繪 1675 年禧年開啟聖門的場景。紀念碑前方地面一塊簡樸的墓石下，安葬著教宗思道四世與儒略二世。',
+    station: [-43, 1.7, -23.5], look: [-50, 4.5, -23.5], hotspot: [-49, 8.5, -26], fov: 58,
+    sources: [`${SP}/Monuments/ClementX/ClementX.htm`],
+  },
+  {
+    id: 'petronilla', zone: 'nwchapel', title: '聖佩特羅尼拉祭台', subtitle: 'Guercino 原畫（1623） · Cristofari 1728–30 年製成馬賽克',
+    text: '位於聖彌額爾與聖佩特羅尼拉禮拜堂的後方。祭壇畫依 Guercino 的作品製成馬賽克，原畫今藏卡比托利歐美術館。祭台下安放聖佩特羅尼拉的聖髑。在羅馬的法國信眾每年 5 月 31 日在此聚會。',
+    station: [-44, 1.7, -47], look: [-54, 5, -44.5], hotspot: [-53, 9, -47], fov: 58,
+    sources: [`${SP}/Altars/StPetronilla/StPetronilla.htm`],
+  },
+  {
+    id: 'michael', zone: 'nwchapel', title: '聖彌額爾總領天使祭台', subtitle: '依 Guido Reni 原作 · 1757–1758 年馬賽克',
+    text: '祭壇畫依 Guido Reni 為羅馬嘉布遣會聖母堂所繪的《聖彌額爾》製成馬賽克。此處 1628 年設置的前一幅馬賽克，是新聖彼得大教堂中第一幅馬賽克祭壇畫，今存於馬切拉塔主教座堂。',
+    station: [-40, 1.7, -48], look: [-43.5, 5, -56], hotspot: [-41, 9.5, -55], fov: 58,
+    sources: [`${SP}/Altars/StMichaelArchangel/StMichaelArchangel.htm`],
+  },
+  {
+    id: 'tabitha', zone: 'nwchapel', title: '聖伯多祿使塔比莎復活祭台', subtitle: 'Placido Costanzi 原畫 · 1758–1760 年製成馬賽克',
+    text: '描繪宗徒大事錄第 9 章，伯多祿使約培的女門徒塔比莎死而復活。原畫由 Placido Costanzi 繪製，今藏羅馬天使與殉道者聖母大殿；祭台兩旁是灰色花崗岩柱。',
+    station: [-44, 1.7, -40], look: [-33, 5, -40], hotspot: [-34, 9.5, -42.5], fov: 58,
+    sources: [`${SP}/Altars/StPeter-Tabitha/StPeter-Tabitha.htm`],
+  },
+  {
+    id: 'navaltar', zone: 'nwchapel', title: '《小船》祭台', subtitle: 'Giovanni Lanfranco 原作 · 1726/27 年製成馬賽克',
+    text: '位於聖海倫娜巨柱背面，與柱廊上喬托的《小船》是不同作品。描繪在水面上將要下沉的伯多祿向耶穌求救。祭壇畫依 Lanfranco 1628 年完成的壁畫製成馬賽克；兩旁的 brocatello 大理石柱是大教堂中僅有的一對。祭台下有聖曼蘇埃圖斯與聖霍內斯圖斯的聖髑。',
+    station: [-37.5, 1.7, -43], look: [-37.5, 5, -33], hotspot: [-35, 9.5, -34], fov: 58,
+    sources: [`${SP}/Altars/Navicella/Navicella.htm`],
+  },
   // ── 右耳堂 ──
   {
     id: 'clement13', zone: 'ntransept', title: '克勉十三世紀念碑', subtitle: '安東尼奧·卡諾瓦 · 1783–1792 · 卡拉拉大理石',
     text: '新古典主義雕塑家卡諾瓦的早期代表作，前後花了近十年。教宗跪在高處默禱，墓門兩側蹲伏著兩頭石獅，一醒一睡。',
     station: [4, 1.7, -40], look: [-13.7, 5.5, -40], hotspot: [-12.3, 10, -36.8], fov: 55, featured: true,
     sources: [`${SP}/Monuments/ClementXIII/ClementXIII.htm`],
+  },
+  {
+    id: 'ntransaltars', zone: 'ntransept', title: '右耳堂三祭台', subtitle: '聖普羅策素與瑪爾定 · 聖伊拉斯謨 · 聖文策老',
+    text: '中央是聖普羅策素與瑪爾定祭台，馬賽克依 Valentin de Boulogne 的原畫製作（原畫今藏梵蒂岡美術館），祭台下的斑岩甕安放兩位聖人的聖髑。左側是聖伊拉斯謨祭台，馬賽克依普桑（Nicolas Poussin）1628–29 年的原畫製作，原畫同樣藏於梵蒂岡美術館。右側是聖文策老祭台，馬賽克依 Angelo Caroselli 的原畫製作，兩旁另有聖濟利祿與聖默道的馬賽克。',
+    station: [0, 1.7, -45], look: [0, 6, -68], hotspot: [-2.5, 11.5, -66.5], fov: 62,
+    sources: [`${SP}/Altars/StsProcessus&Martinian/StsProcessus&Martinian.htm`, `${SP}/Altars/StErasmus/StErasmus.htm`, `${SP}/Altars/StWenceslas/StWenceslas.htm`],
   },
   // ── 中殿右側與右側廊（回程） ──
   {
@@ -229,5 +331,12 @@ export const EXHIBITS: Exhibit[] = [
     text: '入口右側第一座禮拜堂，緊鄰聖門。米開朗基羅二十四歲時完成，也是他唯一簽名的作品，名字刻在聖母胸前的飾帶上。聖母懷抱基督遺體，神情平靜而年輕。1972 年 5 月 21 日遭人以鎚子連擊 15 次，修復後置於防彈玻璃之後；這層玻璃在 2024 年 11 月更新。',
     station: [110, 1.7, -19.5], look: [110, 2.6, -31], hotspot: [113, 4.8, -29], fov: 50, featured: true,
     sources: [`${SP}/Altars/Pieta/Pieta.htm`, `${WK}Piet%C3%A0_(Michelangelo)`],
+    scan: {
+      url: 'models/pieta-mary.glb',
+      title: '真實掃描：聖殤的聖母局部',
+      credit: '掃描對象：經梵蒂岡博物館授權、由大都會博物館以原作直接翻模製成的翻模件 · 掃描：Cosmo Wenman',
+      license: 'CC BY',
+      source: 'https://sketchfab.com/3d-models/michelangelos-pieta-detail-of-mary-b04b5b4ac759459fb1690711d34d8525',
+    },
   },
 ];

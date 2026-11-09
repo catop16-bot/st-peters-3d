@@ -29,5 +29,18 @@ export default defineConfig({
   base: './',
   plugins: [saveVideo()],
   server: { port: 5173, host: '127.0.0.1' },
-  build: { target: 'es2022', chunkSizeWarningLimit: 2000 },
+  build: {
+    target: 'es2022',
+    chunkSizeWarningLimit: 2000,
+    // 第三方套件（three、後製特效）拆成獨立 chunk：程式更新時瀏覽器可沿用快取
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          // 只把首屏必需的核心套件放進 vendor；動態載入的 loader（GLTF/Draco）與宣傳片套件留在各自的 chunk
+          if (/node_modules\/(three\/build|three\/src|postprocessing|n8ao)\//.test(id)) return 'vendor';
+          return undefined;
+        },
+      },
+    },
+  },
 });

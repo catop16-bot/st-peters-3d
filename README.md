@@ -35,6 +35,14 @@ npm run build      # 輸出靜態網站到 dist/
 - `src/interior/exhibitsData.ts`：31 件真實展品的解說、分區、導覽點與資料來源網址（依 stpetersbasilica.info 官方平面圖順序）
 - `src/interior/Exhibits.ts`：展品與祭台的程式建模（`modelUrl` 預留換成 glTF 掃描）
 - `src/interior/nav.ts`：導覽移動的避障路徑（不穿牆、不穿柱）
+- `src/interior/ScanViewer.ts`：真實 3D 掃描檢視器（Draco 壓縮 glTF）。掃描檔放在 `public/models/`，檔案存在時解說卡才會出現按鈕。只收錄出處與授權（CC0 / CC BY / CC BY-SA）都查證過的掃描。
+
+## 效能與手機
+
+- 教堂內部與宣傳片程式在需要時才動態載入；第三方套件拆成 `vendor` chunk
+- 低畫質（手機預設）使用 `public/textures/*/512/` 的 512 px 貼圖
+- 轉場特效只在轉場期間啟用；自動曝光改為非同步讀回；陰影只在相機移動超過一定距離才重繪
+- 觸控：雙點教堂進入內部、內部單指環視與雙指縮放；手機版內部介面為抽屜式目錄與可收合解說卡
 - `src/interior/Lighting.ts`：依外部太陽方向的光束、地面光斑、微塵、夜間燈光
 - `src/interior/TourController.ts`、`InteriorUI.ts`：導覽點滑行、拖曳環視、精選／完整路線、分區目錄、解說卡（附資料來源）、小平面圖
 - `src/interior/InteriorMode.ts`：進出轉場與場景切換；轉場效果在 `core/Renderer.ts` 的 `PortalEffect`

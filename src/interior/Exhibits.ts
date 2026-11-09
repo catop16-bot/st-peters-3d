@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GeoBucket, boxAt, cylAt, lathe, archShape } from '../core/geometry';
 import { statueGeometry } from '../world/statue';
 import type { InteriorBuild } from './Interior';
-import { IN } from './Interior';
+import { IN, CH } from './Interior';
 
 import { EXHIBITS } from './exhibitsData';
 export { EXHIBITS, ZONES, type Exhibit, type Zone } from './exhibitsData';
@@ -266,7 +266,7 @@ export function buildExhibits(build: InteriorBuild): ExhibitBuild {
   }
 
   // 9. 亞歷山大七世紀念碑：左（南）耳堂外側牆，包住通往出口的門
-  alexanderVII(b, mats).put(b, -IN.halfW, 40, 1, 0);
+  alexanderVII(b, mats).put(b, -IN.halfW + 0.3, 40, 1, 0); // 牆厚 0.6 m，貼齊牆面
 
   // 10. 其餘展品與祭台
   buildMore(b, build, bronze, porphyry);
@@ -555,7 +555,33 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     for (const [dz, v, h] of [[-1.3, 0, 2.6], [0.2, 2, 2.9], [1.5, 1, 2.4]] as [number, number, number][]) {
       const g = statueGeometry(v); g.scale(0.45 * h, h, h); g.translate(0.55, 2.4, dz); P.add(M.marbleWhite, g);
     }
-    P.put(b, -40, W, 0, -1);
+    P.put(b, CH.x0 + 0.3, 44.5, 1, 0); // 圓柱聖母禮拜堂右側
+  }
+
+  // ── 39 尊修會創辦人像：依官方位置圖分區擺放（同區內各尊的確切壁龕未標示，雕像不標名） ──
+  founderNiches(b, M);
+
+  // ── 後殿轉角禮拜堂（牆厚 0.6 m，構件貼齊牆面 +0.3） ──
+  const brocatello = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.55, 0.32, 0.16), roughness: 0.3 });
+  // 西南：圓柱聖母禮拜堂一帶
+  altar(M, { w: 5, h: 9.5 }).put(b, -37.5, CH.z0 + 0.3, 0, 1); // 耶穌聖心
+  altar(M, { w: 5, h: 9.5 }).put(b, -43.5, CH.z1 - 0.3, 0, -1); // 治癒癱子
+  {
+    const P = altar(M, { w: 5.4, h: 10 }); // 圓柱聖母：聖像繪於大理石柱段上
+    P.add(M.marble, boxAt(0.5, 3.0, 8.2, 1.6, 0.55));
+    P.add(M.gold, boxAt(0.25, 4.4, 7.4, 1.9, 0.5));
+    P.put(b, CH.x1 - 0.3, 40, -1, 0);
+  }
+  tomb(M, { pope: 'seated', popeMat: bronze }).put(b, CH.corrX - CH.corrHW + 0.3, 23.5, 1, 0); // 亞歷山大八世
+  // 西北：聖彌額爾與聖佩特羅尼拉禮拜堂一帶
+  tomb(M, { pope: 'seated', popeMat: M.marbleWhite }).put(b, CH.corrX - CH.corrHW + 0.3, -23.5, 1, 0); // 克勉十世
+  altar(M, { w: 5.6, h: 10 }).put(b, CH.x0 + 0.3, -44.5, 1, 0); // 聖佩特羅尼拉（禮拜堂後方）
+  altar(M, { w: 5, h: 9.5 }).put(b, -43.5, -CH.z1 + 0.3, 0, 1); // 聖彌額爾
+  altar(M, { w: 5, h: 9.5 }).put(b, CH.x1 - 0.3, -40, -1, 0); // 塔比莎
+  {
+    const P = altar(M, { w: 5, h: 9.5, cols: false }); // 《小船》祭台：兩旁為 brocatello 大理石柱
+    for (const s of [-1, 1]) P.add(brocatello, cylAt(0.36, 0.32, 1.4, 8.8, 0.8, s * 2.7, 16));
+    P.put(b, -37.5, -CH.z0 - 0.3, 0, -1);
   }
   // 保祿三世（寶座左側）、烏爾巴諾八世（寶座右側）：位於後殿半圓牆上
   const apseC = -(Math.abs(IN.apseEnd) - W), th = (55 * Math.PI) / 180;
@@ -581,7 +607,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
       lion(P, M.marbleWhite, 1.4, s * 1.9);
       P.add(M.marbleWhite, figure(s > 0 ? 0 : 1, 1.6, 1.0, s * 2.4, 2.6, 1, -s * 0.2));
     }
-    P.put(b, -W, -40, 1, 0);
+    P.put(b, -W + 0.3, -40, 1, 0);
   }
 
   // ── 右側廊（北，z < 0） ──
@@ -657,4 +683,32 @@ function inward2(g: THREE.BufferGeometry) {
   for (const key of Object.keys(n.attributes)) if (key !== 'position') n.deleteAttribute(key);
   n.computeVertexNormals();
   return n;
+}
+
+/**
+ * 修會創辦人像壁龕（上下兩層）：
+ * 左中殿 8、右中殿 7（右側最靠穹頂的下層為聖彼得青銅像）、兩耳堂西側 8、東側 8、後殿兩側 8，共 39 尊。
+ */
+function founderNiches(b: GeoBucket, M: Mats) {
+  const W = IN.halfW, cols: [number, number, number, number, boolean][] = []; // x, z, fx, fz, 有下層
+  for (const x of [28, 47, 61, 75]) {
+    cols.push([x, W, 0, -1, true]); // 左中殿（南）
+    cols.push([x === 28 ? 29.5 : x, -W, 0, 1, x !== 28]); // 右中殿（北）；聖彼得像上方只有上層
+  }
+  for (const s of [-1, 1]) for (const z of [25.5, 30.5]) {
+    cols.push([-W, s * z, 1, 0, true]); // 耳堂西側
+    cols.push([W, s * z, -1, 0, true]); // 耳堂東側
+    cols.push([-z, s * W, 0, -s, true]); // 後殿兩側
+  }
+  let v = 0;
+  for (const [x, z, fx, fz, lower] of cols) {
+    for (const y0 of lower ? [1.2, 12.5] : [12.5]) {
+      const P = new Piece();
+      P.add(M.marbleDark, archPanel(1.15, 6.0, 0.03, y0));
+      P.add(M.gold, archFrame(1.15, 6.0, 0.22, 0.15, 0.0, y0));
+      P.add(M.marble, boxAt(0.8, y0, y0 + 0.45, 1.7, 0.4));
+      P.add(M.marbleWhite, figure(v++ % 4, 0.45, y0 + 0.45, 0, 4.7, 1, 0));
+      P.put(b, x, z, fx, fz);
+    }
+  }
 }

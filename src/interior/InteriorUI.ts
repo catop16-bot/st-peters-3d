@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { EXHIBITS, ZONES } from './exhibitsData';
 import type { TourController } from './TourController';
 import { IN } from './Interior';
+import { ScanViewer } from './ScanViewer';
 
 const FEATURED = EXHIBITS.map((e, i) => (e.featured ? i : -1)).filter((i) => i >= 0);
 const ALL = EXHIBITS.map((_, i) => i);
@@ -19,6 +20,8 @@ export class InteriorUI {
   private tip: HTMLElement;
   private me: SVGGElement;
   private dots: SVGCircleElement[] = [];
+  private scanViewer: ScanViewer | null = null;
+  private current = -1;
   onExit: (() => void) | null = null;
 
   constructor(private tour: TourController) {
@@ -28,7 +31,7 @@ export class InteriorUI {
     this.root.innerHTML = `
       <div class="int-top">
         <div class="int-brand"><div class="t1">聖彼得大教堂</div><div class="t2">Interno della Basilica · 線上導覽</div></div>
-        <button class="int-exit" id="int-exit">返回廣場</button>
+        <div class="int-actions"><button class="int-exit int-menu" id="int-menu">目錄</button><button class="int-exit" id="int-exit">返回廣場</button></div>
       </div>
       <aside class="int-list">
         <div class="int-h">展品目錄 <span class="int-count">${EXHIBITS.length} 件</span></div>
@@ -37,10 +40,12 @@ export class InteriorUI {
       </aside>
       <div class="int-map" id="int-map"></div>
       <div class="int-card hidden" id="int-card">
+        <button class="int-fold" id="int-fold" aria-label="收合解說">⌄</button>
         <div class="int-num" id="int-num"></div>
         <h2 id="int-title"></h2>
         <div class="int-sub" id="int-sub"></div>
         <p id="int-text"></p>
+        <button class="int-scan hidden" id="int-scan">◎ 真實 3D 掃描</button>
         <div class="int-src" id="int-src"></div>
         <div class="int-nav"><button id="int-prev">‹ 上一件</button><button id="int-next">下一件 ›</button></div>
       </div>
@@ -65,7 +70,7 @@ export class InteriorUI {
         const li = document.createElement('li');
         li.dataset.i = String(i);
         li.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${e.title.replace(/ [A-Z].*$/, '')}</span>${e.featured ? '<span class="star">★</span>' : ''}`;
-        li.addEventListener('click', () => { tour.stopAuto(); this.syncTour(); tour.goTo(i); });
+        li.addEventListener('click', () => { tour.stopAuto(); this.syncTour(); this.closeDrawer(); tour.goTo(i); });
         ol.appendChild(li);
       }
       sec.appendChild(ol);
@@ -74,6 +79,15 @@ export class InteriorUI {
     this.me = this.buildMap();
 
     this.root.querySelector('#int-exit')!.addEventListener('click', () => this.onExit?.());
+    // 手機：目錄抽屜、解說卡收合
+    this.root.querySelector('#int-menu')!.addEventListener('click', () => this.root.classList.toggle('drawer-open'));
+    this.root.querySelector('#int-fold')!.addEventListener('click', () => this.card.classList.toggle('min'));
+    this.root.querySelector('#int-scan')!.addEventListener('click', () => {
+      const sc = EXHIBITS[this.current]?.scan;
+      if (!sc) return;
+      tour.stopAuto(); this.syncTour();
+      (this.scanViewer ??= new ScanViewer()).open(sc);
+    });
     this.root.querySelector('#int-prev')!.addEventListener('click', () => { tour.stopAuto(); this.syncTour(); tour.next(-1); });
     this.root.querySelector('#int-next')!.addEventListener('click', () => { tour.stopAuto(); this.syncTour(); tour.next(1); });
     const toggle = (route: number[]) => {
@@ -81,8 +95,8 @@ export class InteriorUI {
       if (same) tour.stopAuto(); else { tour.stopAuto(); tour.startAuto(route); }
       this.syncTour();
     };
-    this.btnFeat.addEventListener('click', () => toggle(FEATURED));
-    this.btnAll.addEventListener('click', () => toggle(ALL));
+    this.btnFeat.addEventListener('click', () => { toggle(FEATURED); this.closeDrawer(); });
+    this.btnAll.addEventListener('click', () => { toggle(ALL); this.closeDrawer(); });
     tour.onSelect = (i) => this.show(i);
     tour.onHover = (i) => {
       if (i === null) { this.tip.classList.remove('on'); return; }
@@ -115,7 +129,7 @@ export class InteriorUI {
       c.setAttribute('cx', String(U(e.look[2]))); c.setAttribute('cy', String(V(e.look[0])));
       c.setAttribute('r', '3.2'); c.setAttribute('class', 'm-dot');
       const t = document.createElementNS(NS, 'title'); t.textContent = e.title; c.appendChild(t);
-      c.addEventListener('click', () => { this.tour.stopAuto(); this.syncTour(); this.tour.goTo(i); });
+      c.addEventListener('click', () => { this.tour.stopAuto(); this.syncTour(); this.closeDrawer(); this.tour.goTo(i); });
       svg.appendChild(c);
       this.dots.push(c);
     });
@@ -126,6 +140,8 @@ export class InteriorUI {
     this.root.querySelector('#int-map')!.appendChild(svg);
     return me;
   }
+
+  private closeDrawer() { this.root.classList.remove('drawer-open'); }
 
   /** 每幀更新小平面圖上的目前位置與朝向 */
   update() {
@@ -143,6 +159,10 @@ export class InteriorUI {
 
   show(i: number) {
     const e = EXHIBITS[i];
+    this.current = i;
+    const scanBtn = this.card.querySelector('#int-scan') as HTMLElement;
+    scanBtn.classList.add('hidden');
+    if (e.scan) ScanViewer.available(e.scan.url).then((ok) => { if (ok && this.current === i) scanBtn.classList.remove('hidden'); });
     (this.card.querySelector('#int-num') as HTMLElement).textContent = `${String(i + 1).padStart(2, '0')} / ${String(EXHIBITS.length).padStart(2, '0')} · ${ZONES.find((z) => z.id === e.zone)!.name}`;
     (this.card.querySelector('#int-title') as HTMLElement).textContent = e.title;
     (this.card.querySelector('#int-sub') as HTMLElement).textContent = e.subtitle;
@@ -155,7 +175,7 @@ export class InteriorUI {
       a.textContent = u.includes('wikipedia') ? 'Wikipedia' : `St. Peter's Basilica.info${e.sources.length > 1 ? ` ${k + 1}` : ''}`;
       src.appendChild(a);
     });
-    this.card.classList.remove('hidden');
+    this.card.classList.remove('hidden', 'min');
     this.card.classList.remove('in'); void this.card.offsetWidth; this.card.classList.add('in');
     this.list.querySelectorAll('li').forEach((li) => {
       const on = Number((li as HTMLElement).dataset.i) === i;

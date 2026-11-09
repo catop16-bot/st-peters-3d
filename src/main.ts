@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Renderer, type Quality } from './core/Renderer';
-import { MaterialLibrary, setMaxAnisotropy } from './core/materials';
+import { MaterialLibrary, setMaxAnisotropy, setTextureTier } from './core/materials';
 import { toLocal, pointInPolygon, cleanRing, type Vec2 } from './core/geo';
 import { offsetRing } from './core/geometry';
 import { Environment } from './env/Environment';
@@ -13,8 +13,8 @@ import { buildCity, buildFarCity, type OsmBuilding, type Poi } from './world/sur
 import { buildStreets, buildTrees, buildLamps, type OsmRoad, type OsmGreen, type OsmWater } from './world/surroundings/Streets';
 import { SceneManager } from './core/SceneManager';
 import { DIM, LANDMARK_INFO } from './data/dimensions';
-import { startPromoPreview, recordPromo, type FrameHooks } from './cinematic/Promo';
-import { InteriorMode } from './interior/InteriorMode';
+import type { FrameHooks } from './cinematic/Promo';
+import type { InteriorMode } from './interior/InteriorMode';
 
 const loadBar = document.getElementById('load-bar')!;
 const loadText = document.getElementById('load-text')!;
@@ -29,7 +29,8 @@ async function main() {
   camera.position.set(...VIEWPOINTS[0].pos);
 
   const R = new Renderer(canvas, scene, camera);
-  setMaxAnisotropy(R.renderer.capabilities.getMaxAnisotropy());
+  setMaxAnisotropy(Math.min(R.renderer.capabilities.getMaxAnisotropy(), R.quality === 'low' ? 4 : 16));
+  setTextureTier(R.quality === 'low');
   const scenes = new SceneManager(scene);
 
   let texLoaded = 0;
@@ -120,7 +121,7 @@ async function main() {
   let downAt = { x: 0, y: 0 };
   canvas.addEventListener('pointerdown', (e) => { downAt = { x: e.clientX, y: e.clientY }; });
   canvas.addEventListener('pointerup', (e) => {
-    if (interior.mode !== 'exterior' || interior.transitioning) return;
+    if (inExterior() === false) return;
     if (rig.mode !== 'orbit' || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 4) return;
     ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
@@ -156,18 +157,34 @@ async function main() {
   scenes.register('exterior', scene);
 
   // ── 教堂內部（雙擊大教堂進入，光之門轉場）──
+  // 內部場景在第一次需要時才載入與建構（動態 import），縮短首次載入時間
   const extUI = ['brand', 'panel', 'hint', 'info'].map((id) => document.getElementById(id)!);
-  const interior = new InteriorMode({
-    M, R, env, camera, canvas, exterior: scene, frame: basilica.frame, rig,
-    onModeChange: (m) => {
-      // 內部隱藏外部介面；回到外部時恢復（資訊卡維持關閉）
-      for (const el of extUI) el.classList.toggle('hidden', m === 'interior' || el.id === 'info');
-      scenes.current = m;
-      rig.controls.enabled = m === 'exterior';
-    },
+  let interior: InteriorMode | null = null;
+  let interiorLoading: Promise<InteriorMode> | null = null;
+  const loadInterior = () => interiorLoading ??= import('./interior/InteriorMode').then(({ InteriorMode }) => {
+    interior = new InteriorMode({
+      M, R, env, camera, canvas, exterior: scene, frame: basilica.frame, rig,
+      onModeChange: (m) => {
+        // 內部隱藏外部介面；回到外部時恢復（資訊卡維持關閉）
+        for (const el of extUI) el.classList.toggle('hidden', m === 'interior' || el.id === 'info');
+        scenes.current = m;
+        rig.controls.enabled = m === 'exterior';
+      },
+    });
+    scenes.register('interior', interior.build.scene);
+    return interior;
   });
-  scenes.register('interior', interior.build.scene);
-  interior.precompile();
+  /** 是否在外部且不在轉場中 */
+  const inExterior = () => !interior || (interior.mode === 'exterior' && !interior.transitioning);
+  const enterInterior = async () => {
+    if (!inExterior() || hooks.camera) return;
+    const btn = document.getElementById('enter-church')!;
+    const label = btn.textContent;
+    if (!interior) btn.textContent = '載入教堂內部…';
+    const it = await loadInterior();
+    btn.textContent = label;
+    it.enter();
+  };
   /** 螢幕座標是否落在大教堂本體上（以畫布自身尺寸換算，避免視窗尺寸為 0 時誤判） */
   const hitsBasilicaNDC = (nx: number, ny: number) => {
     if (!Number.isFinite(nx) || !Number.isFinite(ny)) return false;
@@ -180,15 +197,24 @@ async function main() {
     if (r.width < 1 || r.height < 1) return false;
     return hitsBasilicaNDC(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
   };
-  canvas.addEventListener('dblclick', (e) => {
-    if (interior.mode !== 'exterior' || interior.transitioning || hooks.camera) return;
-    if (hitsBasilica(e.clientX, e.clientY)) { document.getElementById('enter-tip')!.classList.remove('on'); interior.enter(); }
+  const tryEnter = (x: number, y: number) => {
+    if (!inExterior() || hooks.camera) return;
+    if (hitsBasilica(x, y)) { document.getElementById('enter-tip')!.classList.remove('on'); enterInterior(); }
+  };
+  canvas.addEventListener('dblclick', (e) => tryEnter(e.clientX, e.clientY));
+  // 觸控裝置：雙點（300 ms 內、位置相近）視為雙擊
+  let lastTap = { t: 0, x: 0, y: 0 };
+  canvas.addEventListener('pointerup', (e) => {
+    if (e.pointerType !== 'touch') return;
+    const now = performance.now();
+    if (now - lastTap.t < 320 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30) { tryEnter(e.clientX, e.clientY); lastTap.t = 0; }
+    else lastTap = { t: now, x: e.clientX, y: e.clientY };
   });
   // 游標停在大教堂上時提示可雙擊進入
   const enterTip = document.getElementById('enter-tip')!;
   let tipT = 0;
   canvas.addEventListener('pointermove', (e) => {
-    if (interior.mode !== 'exterior' || interior.transitioning || e.buttons) { enterTip.classList.remove('on'); return; }
+    if (!inExterior() || e.buttons || e.pointerType === 'touch') { enterTip.classList.remove('on'); return; }
     const now = performance.now();
     if (now - tipT < 90) return;
     tipT = now;
@@ -197,18 +223,20 @@ async function main() {
     enterTip.style.left = `${e.clientX}px`; enterTip.style.top = `${e.clientY}px`;
   });
   canvas.addEventListener('pointerleave', () => enterTip.classList.remove('on'));
-  document.getElementById('enter-church')!.addEventListener('click', () => interior.enter());
+  document.getElementById('enter-church')!.addEventListener('click', () => enterInterior());
 
   // ── 主迴圈 ──
   progress(1, '完成');
   document.getElementById('loading')!.classList.add('done');
   const clock = new THREE.Clock();
-  let fpsAcc = 0, fpsN = 0, lowFrames = 0;
+  let fpsAcc = 0, fpsN = 0, lowFrames = 0, highFrames = 0, downgrades = 0;
+  let panelQualityTouched = false;
+  document.getElementById('quality')?.addEventListener('click', () => { panelQualityTouched = true; });
   const fpsEl = document.getElementById('fps')!;
   const focus = new THREE.Vector3();
   const hooks: FrameHooks = { camera: null, exposureMul: 1, paused: false };
   const frame = (dt: number) => {
-    const interiorControls = interior.update(dt);
+    const interiorControls = interior ? interior.update(dt) : false;
     if (interiorControls) { /* 內部模式或轉場中：相機由 InteriorMode 控制 */ }
     else if (hooks.camera) hooks.camera(dt);
     else rig.update(dt);
@@ -218,9 +246,9 @@ async function main() {
     const shadowSize = THREE.MathUtils.clamp(Math.pow(1.25, Math.round(Math.log(dist * 1.6) / Math.log(1.25))), 160, 1100);
     if (rig.mode === 'orbit') focus.copy(rig.controls.target);
     else focus.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(shadowSize * 0.35));
-    if (interior.mode === 'interior') focus.copy(rig.controls.target);
+    if (interior?.mode === 'interior') focus.copy(rig.controls.target);
     env.update(dt, camera, focus, shadowSize);
-    if (interior.mode === 'exterior') {
+    if (!interior || interior.mode === 'exterior') {
       piazza.update(dt);
       basilica.clock.draw(Math.floor(env.hours), (env.hours % 1) * 60);
     }
@@ -237,10 +265,17 @@ async function main() {
       fpsEl.textContent = `${fps.toFixed(0)} fps`;
       // 持續低幀率時自動降低畫質
       lowFrames = fps < 24 && clock.elapsedTime > 12 ? lowFrames + 1 : 0;
+      // 持續高幀率時升回一級（使用者手動選過畫質就不自動調整）
+      highFrames = fps > 55 && !panelQualityTouched ? highFrames + 1 : 0;
+      const syncChips = () => document.querySelectorAll<HTMLButtonElement>('#quality .chip').forEach((b) => b.classList.toggle('on', b.dataset.q === R.quality));
       if (lowFrames >= 6 && R.quality !== 'low') {
         setQuality(R.quality === 'high' ? 'medium' : 'low');
-        document.querySelectorAll<HTMLButtonElement>('#quality .chip').forEach((b) => b.classList.toggle('on', b.dataset.q === R.quality));
-        lowFrames = 0;
+        syncChips();
+        lowFrames = 0; highFrames = 0; downgrades++;
+      } else if (highFrames >= 20 && R.quality !== 'high' && downgrades === 0) {
+        setQuality(R.quality === 'low' ? 'medium' : 'high');
+        syncChips();
+        highFrames = 0;
       }
       fpsAcc = 0; fpsN = 0;
     }
@@ -252,11 +287,16 @@ async function main() {
   const promo = new URLSearchParams(location.search).get('promo');
   if (promo !== null) {
     const deps = { env, R, camera, controlsTarget: rig.controls.target, frame, hooks };
-    if (promo === 'record') recordPromo(deps);
-    else startPromoPreview(deps);
+    import('./cinematic/Promo').then(({ recordPromo, startPromoPreview }) => {
+      if (promo === 'record') recordPromo(deps);
+      else startPromoPreview(deps);
+    });
   }
   // 除錯用：在背景分頁中可手動推進畫面
-  (window as unknown as { __app: unknown }).__app = { scene, camera, env, rig, R, M, frame, interior, hitsBasilicaNDC };
+  (window as unknown as { __app: unknown }).__app = { scene, camera, env, rig, R, M, frame, get interior() { return interior; }, loadInterior, enterInterior, hitsBasilicaNDC };
+  // 載入完成後閒置時預先載入內部（不阻塞首屏）
+  const idle = (cb: () => void) => ('requestIdleCallback' in window ? (window as unknown as { requestIdleCallback: (f: () => void, o: object) => void }).requestIdleCallback(cb, { timeout: 8000 }) : setTimeout(cb, 4000));
+  setTimeout(() => idle(() => { loadInterior().then((it) => idle(() => it.precompile())); }), 2500);
 }
 
 const KIND_ZH: Record<string, string> = {

@@ -33,35 +33,60 @@ export class TourController {
   get heading() { return this.yaw; }
 
   constructor(private camera: THREE.PerspectiveCamera, private dom: HTMLElement) {
+    // 依 pointerId 追蹤每根手指：單指拖曳環視、雙指縮放（FOV）
+    const pts = new Map<number, { x: number; y: number }>();
+    let pinch: { d0: number; f0: number } | null = null;
+    let primary = -1;
+    const spread = () => { const [p, q] = [...pts.values()]; return Math.hypot(p.x - q.x, p.y - q.y); };
     dom.addEventListener('pointerdown', (e) => {
       if (!this.enabled) return;
-      this.dragging = true; this.moved = 0; this.last = { x: e.clientX, y: e.clientY };
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 1) { primary = e.pointerId; this.dragging = true; this.moved = 0; this.last = { x: e.clientX, y: e.clientY }; }
+      else if (pts.size === 2) { pinch = { d0: Math.max(spread(), 1), f0: this.fov }; this.moved = 999; }
     });
     window.addEventListener('pointermove', (e) => {
       if (!this.enabled) return;
-      if (this.dragging) {
+      if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && pts.size >= 2) {
+        this.fov = THREE.MathUtils.clamp(pinch.f0 * (pinch.d0 / Math.max(spread(), 1)), 28, 85);
+        this.stopAuto();
+        return;
+      }
+      if (this.dragging && e.pointerId === primary) {
         const dx = e.clientX - this.last.x, dy = e.clientY - this.last.y;
         this.moved += Math.abs(dx) + Math.abs(dy);
         this.last = { x: e.clientX, y: e.clientY };
         if (this.tween) return;
-        const k = 0.0032 * (this.fov / 60);
+        const k = (e.pointerType === 'touch' ? 0.0045 : 0.0032) * (this.fov / 60);
         this.yaw += dx * k;
         this.pitch = THREE.MathUtils.clamp(this.pitch + dy * k, -1.2, 1.45);
         this.stopAuto();
-      } else {
+      } else if (!this.dragging && e.pointerType === 'mouse') {
         const i = this.pick(e.clientX, e.clientY);
         this.dom.style.cursor = i !== null ? 'pointer' : 'grab';
         this.onHover?.(i);
       }
     });
-    window.addEventListener('pointerup', (e) => {
-      if (!this.enabled || !this.dragging) return;
-      this.dragging = false;
-      if (this.moved < 5) {
-        const i = this.pick(e.clientX, e.clientY);
-        if (i !== null) { this.stopAuto(); this.goTo(i); }
+    const up = (e: PointerEvent) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.delete(e.pointerId);
+      if (pts.size < 2) pinch = null;
+      if (e.pointerId === primary) {
+        const wasClick = this.dragging && this.moved < (e.pointerType === 'touch' ? 10 : 5);
+        this.dragging = false; primary = -1;
+        if (wasClick && this.enabled && e.type === 'pointerup') {
+          const i = this.pick(e.clientX, e.clientY);
+          if (i !== null) { this.stopAuto(); this.goTo(i); }
+        }
       }
-    });
+      // 雙指放開一指後，剩下那指接手環視
+      if (pts.size === 1 && primary < 0) {
+        const [id, p] = [...pts.entries()][0];
+        primary = id; this.dragging = true; this.last = { ...p };
+      }
+    };
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
     dom.addEventListener('wheel', (e) => {
       if (!this.enabled) return;
       e.preventDefault();
@@ -155,7 +180,7 @@ export class TourController {
       this.camera.quaternion.slerpQuaternions(tw.q0, tw.q1, THREE.MathUtils.smoothstep(tw.t, 0.05, 0.85));
       this.camera.position.copy(this.pos);
       this.fov = THREE.MathUtils.lerp(tw.f0, tw.f1, e);
-      this.camera.fov = this.fov;
+      this.camera.fov = this.effFov();
       this.camera.updateProjectionMatrix();
       if (tw.t >= 1) { this.tween = null; this.dwell = 0; this.onArrive?.(this.active); }
       return;
@@ -171,9 +196,16 @@ export class TourController {
     this.apply();
   }
 
+  /** 直式螢幕（手機）放寬垂直視角，避免展品左右被裁掉 */
+  private effFov() {
+    const k = THREE.MathUtils.clamp(1 / Math.max(this.camera.aspect, 0.1), 1, 1.45);
+    return Math.min(this.fov * k, 100);
+  }
+
   private apply() {
     this.camera.position.copy(this.pos);
     this.camera.quaternion.copy(this.quatFor(this.yaw, this.pitch));
-    if (this.camera.fov !== this.fov) { this.camera.fov = this.fov; this.camera.updateProjectionMatrix(); }
+    const f = this.effFov();
+    if (this.camera.fov !== f) { this.camera.fov = f; this.camera.updateProjectionMatrix(); }
   }
 }

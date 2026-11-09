@@ -39,16 +39,20 @@ let maxAniso = 8;
 export function setMaxAnisotropy(n: number) { maxAniso = n; }
 
 const texCache = new Map<string, TexSet>();
+/** 低畫質（手機）改用 512 px 貼圖，下載量約為 1/4 */
+let texTier = '';
+export function setTextureTier(low: boolean) { texTier = low ? '512/' : ''; }
 export function loadTexSet(name: string, onLoad?: () => void): TexSet {
   const hit = texCache.get(name);
   if (hit) return hit;
   let pending = 3;
   const done = () => { if (--pending === 0) onLoad?.(); };
-  const base = `${import.meta.env.BASE_URL}textures/${name}/`;
+  const base = `${import.meta.env.BASE_URL}textures/${name}/${texTier}`;
   const mk = (file: string, srgb: boolean) => {
     const t = loader.load(base + file, done, undefined, done);
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
     t.anisotropy = maxAniso;
+    t.name = name; // 供匯出（Blender）辨識貼圖組
     if (srgb) t.colorSpace = THREE.SRGBColorSpace;
     return t;
   };
@@ -77,6 +81,11 @@ export function enhance<T extends THREE.MeshStandardMaterial>(mat: T, opt: Enhan
   if (o.coffer) defines.push('ENH_COFFER', o.coffer.axis === 'z' ? 'COFFER_AXIS_Z' : 'COFFER_AXIS_X');
   if (o.domeMosaic) defines.push('ENH_DOME');
   const key = defines.join('|');
+  // 記錄參數，供匯出到 Blender 時重建材質
+  mat.userData.enh = {
+    tex: o.tex?.map.name, scale: o.scale ?? 0.4, normalScale: o.normalScale ?? 1.0, macro: o.macro ?? 0,
+    facade: !!o.facade, grass: !!o.grass, foliage: !!o.foliage,
+  };
 
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, G);

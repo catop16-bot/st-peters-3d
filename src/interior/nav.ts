@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { IN } from './Interior';
+import { IN, CH } from './Interior';
 
 /**
  * 導覽移動的避障路徑：以矩形障礙物（巨柱、中殿連拱柱、入口牆、祭台區、各臂牆）建立可視圖，
@@ -16,15 +16,22 @@ const boxes: Box[] = (() => {
   // 中殿連拱柱（含兩側壁柱、側廊側紀念碑）
   for (let i = 0; i <= 6; i++) {
     const cx = P + i * IN.bayW;
-    both(Math.max(P, cx - 3.1), Math.min(IN.naveEnd, cx + 3.1), W - 1.2, IN.aisleInner + 2.2);
+    both(Math.max(P, cx - (IN.bayW / 2 - IN.arcHW)), Math.min(IN.naveEnd, cx + (IN.bayW / 2 - IN.arcHW)), W - 1.2, IN.aisleInner + 2.2);
   }
   // 入口牆（中央大門開口 |z| < 2.4）
   both(IN.naveEnd - 0.4, IN.naveEnd + IN.wallT + 0.4, 2.4, IN.vestibule + 4);
   // 教宗祭台、華蓋與告解堂
   out.push([-7.5, 14.5, -7.5, 7.5]);
-  // 後殿臂與兩耳堂的側牆外
-  both(-90, -P + 2, W - 0.5, 90);
-  for (const sx of [-1, 1]) both(Math.min(sx * (W - 0.5), sx * 90), Math.max(sx * (W - 0.5), sx * 90), P - 2, 90);
+  // 兩耳堂東側牆外
+  both(W - 0.5, 90, P - 2, 90);
+  // 西側：後殿臂、兩座後殿轉角禮拜堂與通道以外的實心區域
+  const cL = CH.corrX - CH.corrHW, cR = CH.corrX + CH.corrHW;
+  both(-90, CH.x0 - 0.5, W - 0.5, 90); // 禮拜堂以西
+  both(CH.x0 - 0.5, cL - 0.5, W - 0.5, CH.z0 - 0.5); // 迴廊以西
+  both(cR + 0.5, CH.x1, W - 0.5, CH.z0 - 0.5); // 迴廊以東
+  both(CH.x0 - 0.5, -W + 0.5, CH.z1 + 0.5, 90); // 禮拜堂以南（北）
+  both(CH.x1 + 0.5, -W + 0.5, P - 2, CH.transZ - CH.transHW - 0.5); // 巨柱與通道之間
+  both(CH.x1 + 0.5, -W + 0.5, CH.transZ + CH.transHW + 0.5, CH.z1 + 0.5); // 通道以南（北）
   // 聖彼得青銅像、聖水盆
   out.push([28, 31, -14.2, -11]);
   both(101.6, 104.4, 11.4, W);

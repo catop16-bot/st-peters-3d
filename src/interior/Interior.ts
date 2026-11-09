@@ -29,10 +29,20 @@ export const IN = {
   shellTop: 108,
   lanternTop: 117.6,
   bayW: 14,
+  arcHW: 3.6, // 中殿連拱半寬
+  pilOff: 2.4, // 中殿柱面雙壁柱的偏移
   wallT: 2, // 入口牆厚度
   porticoX1: 131, // 柱廊外牆（立面內側）
   porticoHalfL: 36, // 柱廊半長
   vestibule: 46, // 兩端騎馬像所在的端廳外緣
+};
+
+/** 後殿轉角禮拜堂與通道（|z| 方向以南側為正） */
+export const CH = {
+  x0: -54, x1: -33, z0: 33, z1: 56, // 禮拜堂方室
+  h: 24, // 牆高（上接小穹頂）
+  corrX: -46, corrHW: 4, // 後殿臂 → 禮拜堂的迴廊（中心 x、半寬）
+  transZ: 50.5, transHW: 3, // 耳堂 → 禮拜堂的通道（中心 |z|、半寬）
 };
 
 export interface InteriorMats {
@@ -174,7 +184,7 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
   // ── 中殿：兩側連拱牆、巨柱式壁柱、檐部、筒形拱頂 ──
   const naveLen = IN.naveEnd - IN.pierOuter; // 84 m，6 開間
   const bays = Math.round(naveLen / IN.bayW);
-  const arches = Array.from({ length: bays }, (_, i) => ({ c: (i + 0.5) * IN.bayW, hw: 4.4, h: 23 }));
+  const arches = Array.from({ length: bays }, (_, i) => ({ c: (i + 0.5) * IN.bayW, hw: IN.arcHW, h: 23 }));
   for (const side of [-1, 1]) {
     const wall = archedWall(naveLen, IN.entabTop, 3, arches);
     // 牆面在 XY 平面：x ∈ [0, naveLen]；擠出沿 +Z。放到中殿兩側
@@ -184,7 +194,7 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
     // 雙壁柱（面向中殿）與鍍金柱頭
     for (let i = 0; i <= bays; i++) {
       const x = IN.pierOuter + i * IN.bayW;
-      for (const off of [-1.9, 1.9]) {
+      for (const off of [-IN.pilOff, IN.pilOff]) { // 雙壁柱之間留出創辦人像壁龕
         if ((i === 0 && off < 0) || (i === bays && off > 0)) continue;
         const z = side * (W - 0.35);
         b.add(mats.marbleWhite, boxAt(2.2, 0, 3, 1.2, x + off, z));
@@ -352,11 +362,14 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
     const len = apseC - IN.pierOuter;
     const axis = dir === 'w' ? 'x' : 'z';
     for (const side of [-1, 1]) {
-      // 側牆（平面），面向臂內
-      const g = new THREE.PlaneGeometry(len, IN.entabTop);
-      if (axis === 'x') g.translate(-(IN.pierOuter + apseC) / 2, IN.entabTop / 2, side * W);
-      else { g.rotateY(Math.PI / 2); g.translate(side * W, IN.entabTop / 2, sgn * (IN.pierOuter + apseC) / 2); }
-      b.add(mats.marble, side < 0 ? g : inward(g));
+      // 側牆：後殿臂兩側與兩耳堂西牆開拱，通往後殿轉角禮拜堂
+      if (axis === 'x') wallSeg(b, mats.marble, -IN.pierOuter, side * W, -apseC, side * W, IN.entabTop, [{ c: -IN.pierOuter - CH.corrX, hw: CH.corrHW, h: 14 }]);
+      else if (side < 0) wallSeg(b, mats.marble, -W, sgn * IN.pierOuter, -W, sgn * apseC, IN.entabTop, [{ c: CH.transZ - IN.pierOuter, hw: CH.transHW, h: 12 }]);
+      else {
+        const g = new THREE.PlaneGeometry(len, IN.entabTop);
+        g.rotateY(Math.PI / 2); g.translate(side * W, IN.entabTop / 2, sgn * (IN.pierOuter + apseC) / 2);
+        b.add(mats.marble, inward(g));
+      }
       // 檐部
       if (axis === 'x') b.add(mats.marble, boxAt(len + IN.pierOuter - IN.archPlane, 27.2, IN.entabTop, 2.0, -(IN.archPlane + apseC) / 2, side * (W - 0.8)));
       else b.add(mats.marble, boxAt(2.0, 27.2, IN.entabTop, len + IN.pierOuter - IN.archPlane, side * (W - 0.8), sgn * (IN.archPlane + apseC) / 2));
@@ -394,6 +407,8 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
     }
   };
   arm('n'); arm('s'); arm('w');
+  // 後殿兩座轉角禮拜堂（西南：圓柱聖母；西北：聖彌額爾與聖佩特羅尼拉）
+  for (const s of [-1, 1]) apseChapel(b, mats, s);
 
   // ── 中殿高側窗（拱頂弦月窗，位於每開間上方）──
   const naveWindows: InteriorBuild['naveWindows'] = [];
@@ -455,8 +470,7 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
 /**
  * 轉角禮拜堂（額我略、克勉）：側廊靠交叉部的第一開間，鼓座 + 高穹頂（額我略禮拜堂穹頂高約 42 m）
  */
-function cornerDome(b: GeoBucket, mats: InteriorMats, x: number, cz: number) {
-  const r = 6.2, y0 = IN.aisleCeil, y1 = 31, top = 38.5;
+function cornerDome(b: GeoBucket, mats: InteriorMats, x: number, cz: number, r = 6.2, y0 = IN.aisleCeil, y1 = 31, top = 38.5) {
   b.add(mats.marble, inward(cylAt(r, r, y0, y1, x, cz, 48, true)));
   for (let k = 0; k < 8; k++) {
     const a = ((k + 0.5) / 8) * Math.PI * 2;
@@ -468,8 +482,8 @@ function cornerDome(b: GeoBucket, mats: InteriorMats, x: number, cz: number) {
   const prof: [number, number][] = [];
   for (let i = 0; i <= 16; i++) { const t = (i / 16) * Math.PI / 2; prof.push([1.1 + (r - 1.1) * Math.cos(t), y1 + (top - y1) * Math.sin(t)]); }
   b.add(mats.stucco, inward(lathe(prof, 48, x, cz)));
-  b.add(mats.stucco, inward(cylAt(1.1, 1.1, top, 41.5, x, cz, 16, true)));
-  b.add(mats.window, inward(lathe([[1.1, 41.5], [0.01, 42]], 16, x, cz)));
+  b.add(mats.stucco, inward(cylAt(1.1, 1.1, top, top + 3, x, cz, 16, true)));
+  b.add(mats.window, inward(lathe([[1.1, top + 3], [0.01, top + 3.5]], 16, x, cz)));
   for (const y of [y0 - 0.4, y1 - 0.4]) b.add(mats.gold, lathe([[r + 0.2, y], [r + 0.2, y + 0.4], [r - 0.3, y + 0.4], [r - 0.3, y]], 48, x, cz));
 }
 
@@ -520,4 +534,50 @@ function buildPortico(b: GeoBucket, mats: InteriorMats) {
     b.add(mats.gold, t);
   }
   return { x0, x1, halfL: L, vest: V };
+}
+
+/** 沿線段 (x0,z0)→(x1,z1) 的牆（厚 0.6 m，兩面可見），可開拱洞（c 為距起點的距離） */
+export function wallSeg(b: GeoBucket, mat: THREE.Material, x0: number, z0: number, x1: number, z1: number, h: number, holes: { c: number; hw: number; h: number }[] = []) {
+  const L = Math.hypot(x1 - x0, z1 - z0);
+  const sh = new THREE.Shape();
+  sh.moveTo(0, 0); sh.lineTo(L, 0); sh.lineTo(L, h); sh.lineTo(0, h); sh.closePath();
+  for (const o of holes) sh.holes.push(new THREE.Path(archShape(o.hw, o.h).getPoints(16).map((p) => new THREE.Vector2(p.x + o.c, p.y))));
+  const g = new THREE.ExtrudeGeometry(sh, { depth: 0.6, bevelEnabled: false, curveSegments: 16 });
+  g.translate(0, 0, -0.3);
+  g.rotateY(Math.atan2(-(z1 - z0), x1 - x0));
+  g.translate(x0, 0, z0);
+  b.add(mat, g);
+}
+
+/** 後殿轉角禮拜堂（s = 1 西南、−1 西北）：方室、小穹頂、兩條通道 */
+function apseChapel(b: GeoBucket, mats: InteriorMats, s: number) {
+  const W = IN.halfW, { x0, x1, z0, z1, h } = CH;
+  const Z = (z: number) => s * z;
+  // 方室四牆：北（靠後殿臂）開迴廊口、東（靠耳堂）開通道口
+  wallSeg(b, mats.marble, x0, Z(z0), x1, Z(z0), h, [{ c: CH.corrX - x0, hw: CH.corrHW, h: 14 }]);
+  wallSeg(b, mats.marble, x1, Z(z0), x1, Z(z1), h, [{ c: CH.transZ - z0, hw: CH.transHW, h: 12 }]);
+  wallSeg(b, mats.marble, x0, Z(z0), x0, Z(z1), h);
+  wallSeg(b, mats.marble, x0, Z(z1), x1, Z(z1), h);
+  // 檐部與壁柱
+  for (const [ax0, az0, ax1, az1] of [[x0, z0, x1, z0], [x1, z0, x1, z1], [x0, z0, x0, z1], [x0, z1, x1, z1]]) {
+    const cx = (ax0 + ax1) / 2, cz = (az0 + az1) / 2, lx = Math.abs(ax1 - ax0), lz = Math.abs(az1 - az0);
+    b.add(mats.marble, boxAt(Math.max(lx, 1.6), h - 3, h - 1, Math.max(lz, 1.6), cx, Z(cz)));
+    b.add(mats.gold, boxAt(Math.max(lx, 1.7) , h - 2.2, h - 2.0, Math.max(lz, 1.7), cx, Z(cz)));
+  }
+  // 天花（中央圓洞）＋鼓座、穹頂、燈籠亭
+  const cx = (x0 + x1) / 2, cz = Z((z0 + z1) / 2), r = 8.5;
+  const circle: Vec2[] = Array.from({ length: 40 }, (_, k) => [cx + Math.cos((k / 40) * Math.PI * 2) * r, cz + Math.sin((k / 40) * Math.PI * 2) * r] as Vec2);
+  const zz = [Z(z0), Z(z1)].sort((a, c) => a - c);
+  b.add(mats.stucco, inward(flatPolygon([[x0, zz[0]], [x1, zz[0]], [x1, zz[1]], [x0, zz[1]]], [circle], h)));
+  cornerDome(b, mats, cx, cz, r, h, h + 7, h + 14.5);
+  // 後殿臂 → 禮拜堂的迴廊：兩側牆與平頂
+  const cxL = CH.corrX - CH.corrHW, cxR = CH.corrX + CH.corrHW, ch = 15;
+  wallSeg(b, mats.marble, cxL, Z(W), cxL, Z(z0), ch);
+  wallSeg(b, mats.marble, cxR, Z(W), cxR, Z(z0), ch);
+  b.add(mats.stucco, boxAt(CH.corrHW * 2, ch, ch + 0.4, z0 - W, CH.corrX, Z((W + z0) / 2)));
+  // 耳堂 → 禮拜堂的通道
+  const tz0 = CH.transZ - CH.transHW, tz1 = CH.transZ + CH.transHW, th = 13;
+  wallSeg(b, mats.marble, x1, Z(tz0), -W, Z(tz0), th);
+  wallSeg(b, mats.marble, x1, Z(tz1), -W, Z(tz1), th);
+  b.add(mats.stucco, boxAt(Math.abs(-W - x1), th, th + 0.4, CH.transHW * 2, (x1 - W) / 2, Z(CH.transZ)));
 }
