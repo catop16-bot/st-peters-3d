@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "/Users/cooper6716/.local/node/bin/npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173,
+      "env": { "PATH": "/Users/cooper6716/.local/node/bin:/usr/bin:/bin" }
+    }
+  ]
+}

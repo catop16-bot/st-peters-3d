@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>聖彼得大教堂 3D 觀覽</title>
+  <link rel="stylesheet" href="/src/ui/style.css" />
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <div id="loading">
+    <div class="load-inner">
+      <div class="load-title">Basilica di San Pietro</div>
+      <div class="load-sub">聖彼得大教堂 · 3D 觀覽</div>
+      <div class="bar"><div id="load-bar"></div></div>
+      <div id="load-text">載入中…</div>
+    </div>
+  </div>
+
+  <header id="brand">
+    <div class="t1">聖彼得大教堂</div>
+    <div class="t2">Basilica Papale di San Pietro in Vaticano · 3D 觀覽</div>
+  </header>
+
+  <aside id="panel">
+    <button id="panel-toggle" aria-label="收合面板">⟩</button>
+    <div class="panel-body">
+      <section>
+        <h3>時間 <span id="clock-label" class="mono">10:30</span></h3>
+        <input type="range" id="time" min="0" max="24" step="0.0166667" value="10.5" />
+        <div class="sun-times"><span id="sunrise">日出 --:--</span><span id="sunset">日落 --:--</span></div>
+        <div class="row">
+          <input type="date" id="date" />
+          <button id="flow" class="chip" title="時間流動（每秒 2 分鐘）">▶ 流動</button>
+        </div>
+        <div class="chips" id="presets">
+          <button class="chip" data-t="sunrise">清晨</button>
+          <button class="chip" data-t="noon">正午</button>
+          <button class="chip" data-t="sunset">黃昏</button>
+          <button class="chip" data-t="night">夜晚</button>
+        </div>
+      </section>
+      <section>
+        <h3>季節</h3>
+        <div class="chips" id="seasons">
+          <button class="chip" data-s="spring">春</button>
+          <button class="chip" data-s="summer">夏</button>
+          <button class="chip" data-s="autumn">秋</button>
+          <button class="chip" data-s="winter">冬</button>
+        </div>
+      </section>
+      <section>
+        <h3>天氣</h3>
+        <div class="chips" id="weathers">
+          <button class="chip" data-w="clear">☀︎ 晴</button>
+          <button class="chip" data-w="cloudy">⛅︎ 多雲</button>
+          <button class="chip" data-w="overcast">☁︎ 陰</button>
+          <button class="chip" data-w="rain">☂︎ 雨</button>
+          <button class="chip" data-w="fog">≋ 霧</button>
+          <button class="chip" data-w="snow">❄︎ 雪</button>
+        </div>
+      </section>
+      <section>
+        <h3>視角</h3>
+        <button class="chip enter-btn" id="enter-church">⛪︎ 進入教堂內部（或雙擊教堂）</button>
+        <div class="views" id="views"></div>
+        <div class="chips">
+          <button class="chip" id="mode-orbit">環繞觀覽</button>
+          <button class="chip" id="mode-fly">自由飛行 (F)</button>
+        </div>
+      </section>
+      <section>
+        <h3>畫質 <span id="fps" class="mono dim"></span></h3>
+        <div class="chips" id="quality">
+          <button class="chip" data-q="high">高</button>
+          <button class="chip" data-q="medium">中</button>
+          <button class="chip" data-q="low">低</button>
+        </div>
+      </section>
+      <section class="foot">
+        <button class="link" id="about-open">關於本模型與資料來源</button>
+      </section>
+    </div>
+  </aside>
+
+  <div id="hint">
+    <span><b>拖曳</b> 旋轉</span><span><b>右鍵 / 雙指</b> 平移</span><span><b>滾輪</b> 縮放</span><span><b>WASD</b> 移動</span><span><b>F</b> 飛行模式</span><span><b>點擊</b> 雕像、店家、建築</span><span><b>雙擊教堂</b> 進入內部</span>
+  </div>
+
+  <div id="enter-tip">雙擊進入教堂內部</div>
+  <div id="info" class="hidden">
+    <button class="close" id="info-close">×</button>
+    <div id="info-title"></div>
+    <div id="info-text"></div>
+  </div>
+
+  <div id="about" class="hidden">
+    <div class="about-card">
+      <button class="close" id="about-close">×</button>
+      <h2>關於本模型</h2>
+      <p>本觀覽以真實資料重建聖彼得大教堂、聖彼得廣場與 Borgo 周邊街區，不加入虛構物件。</p>
+      <h4>資料來源</h4>
+      <ul>
+        <li>建築輪廓、高度、道路、樹木、路燈、店家名稱：© OpenStreetMap contributors（ODbL 1.0）</li>
+        <li>柱廊 140 尊聖人像與立面 13 尊雕像的位置與名稱：OpenStreetMap</li>
+        <li>主要尺寸：立面寬 114.69 m、高 45.55 m；穹頂十字架頂 136.57 m；方尖碑碑身 25.5 m（Wikipedia 等文獻）</li>
+        <li>太陽、月亮位置：依羅馬經緯度與所選日期時間即時計算（SunCalc）</li>
+        <li>材質貼圖：ambientCG（CC0）</li>
+      </ul>
+      <h4>簡化說明</h4>
+      <ul>
+        <li>雕像以「位置、數量、比例正確」的簡化著袍人像表示，無法逐尊還原雕刻細節。</li>
+        <li>周邊建築立面為依 OSM 輪廓與高度產生的羅馬式立面；招牌僅使用 OSM 上真實存在的店名，沒有資料的店面不放招牌。</li>
+        <li>地形以平面處理（梵蒂岡山丘的坡度未建模）。</li>
+      </ul>
+      <h4>教堂內部導覽</h4>
+      <ul>
+        <li>雙擊教堂（或按「進入教堂內部」）經光之門進入。內部依真實尺寸建模：中殿長 186 m、拱頂 46 m、穹頂內徑 41.47 m。</li>
+        <li>十件真實展品：斑岩圓盤、聖門、聖殤、中殿、聖彼得青銅像、貝尼尼華蓋、穹頂與銘文、四柱巨像、聖彼得寶座、亞歷山大七世紀念碑。解說依 Wikipedia 等文獻撰寫。</li>
+        <li>雕塑為比例正確的簡化造型，之後可換成真實 3D 掃描。展品的確切位置依平面圖近似。</li>
+        <li>室內光束方向依外部當下的真實太陽位置計算；夜間改為暖色燈光。</li>
+      </ul>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
