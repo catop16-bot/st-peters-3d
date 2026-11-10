@@ -84,25 +84,35 @@ export const DIM = {
   },
 };
 
-export const LANDMARK_INFO: Record<string, { title: string; text: string }> = {
+export const LANDMARK_INFO: Record<string, { title: string; text: string; titleEn: string; textEn: string }> = {
   basilica: {
     title: '聖彼得大教堂 Basilica di San Pietro',
     text: '1506–1626 年興建，由布拉曼特、米開朗基羅、馬德諾、貝尼尼等人接續完成。內部長約 186 m，為世界最大的教堂之一。',
+    titleEn: "St. Peter's Basilica",
+    textEn: 'Built 1506–1626 by a succession of architects including Bramante, Michelangelo, Maderno and Bernini. About 186 m long inside, it is one of the largest churches in the world.',
   },
   dome: {
     title: '米開朗基羅穹頂',
     text: '米開朗基羅設計、賈科莫·德拉·波爾塔於 1590 年完成。內徑約 41.5 m，地面至十字架頂 136.57 m。',
+    titleEn: "Michelangelo's dome",
+    textEn: 'Designed by Michelangelo and completed by Giacomo della Porta in 1590. About 41.5 m across inside; 136.57 m from the ground to the top of the cross.',
   },
   facade: {
     title: '馬德諾立面',
     text: '卡洛·馬德諾 1608–1614 年設計，寬 114.69 m、高 45.55 m。頂部 13 尊雕像為基督、施洗約翰與 11 位使徒（聖彼得像不在其中）。',
+    titleEn: "Maderno's facade",
+    textEn: 'Designed by Carlo Maderno, 1608–1614; 114.69 m wide and 45.55 m high. The 13 statues on top are Christ, John the Baptist and 11 apostles (St Peter is not among them).',
   },
   colonnade: {
     title: '貝尼尼柱廊',
     text: '貝尼尼 1656–1667 年設計。284 根多立克柱、88 根壁柱分四列環抱廣場，頂上 140 尊聖人像。站在斑岩「柱廊中心」圓盤上，四列柱會重疊成一列。',
+    titleEn: "Bernini's colonnade",
+    textEn: 'Designed by Bernini, 1656–1667. 284 Doric columns and 88 pilasters in four rows embrace the square, with 140 statues of saints on top. Stand on the porphyry "centre of the colonnade" disc and the four rows line up as one.',
   },
   obelisk: {
     title: '梵蒂岡方尖碑',
     text: '古埃及花崗岩方尖碑，37 年由卡利古拉運至羅馬，1586 年由多梅尼科·豐塔納遷至現址。碑身 25.5 m，連基座與十字約 41 m。',
+    titleEn: 'Vatican obelisk',
+    textEn: 'An ancient Egyptian granite obelisk, brought to Rome by Caligula in AD 37 and moved to this spot by Domenico Fontana in 1586. The shaft is 25.5 m; about 41 m with base and cross.',
   },
 };

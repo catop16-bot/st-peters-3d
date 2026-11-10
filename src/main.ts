@@ -15,10 +15,11 @@ import { SceneManager } from './core/SceneManager';
 import { DIM, LANDMARK_INFO } from './data/dimensions';
 import type { FrameHooks } from './cinematic/Promo';
 import type { InteriorMode } from './interior/InteriorMode';
+import { t, applyLang } from './i18n';
 
 const loadBar = document.getElementById('load-bar')!;
 const loadText = document.getElementById('load-text')!;
-const progress = (p: number, t: string) => { loadBar.style.width = `${Math.round(p * 100)}%`; loadText.textContent = t; };
+const progress = (p: number, msg: string) => { loadBar.style.width = `${Math.round(p * 100)}%`; loadText.textContent = msg; };
 // 讓載入畫面有機會更新；分頁在背景時 rAF 會暫停，因此以計時器作為後備
 const nextFrame = () => new Promise((r) => { requestAnimationFrame(() => r(null)); setTimeout(() => r(null), 30); });
 
@@ -34,18 +35,19 @@ async function main() {
   const scenes = new SceneManager(scene);
 
   let texLoaded = 0;
-  progress(0.05, '載入材質…');
-  const M = new MaterialLibrary(() => { texLoaded++; if (texLoaded <= 5) loadText.textContent = `載入材質… ${texLoaded}/5`; });
+  applyLang();
+  progress(0.05, t('載入材質…', 'Loading materials…'));
+  const M = new MaterialLibrary(() => { texLoaded++; if (texLoaded <= 5) loadText.textContent = `${t('載入材質…', 'Loading materials…')} ${texLoaded}/5`; });
   const env = new Environment(scene, R.renderer);
 
-  progress(0.3, '載入 OpenStreetMap 資料…');
+  progress(0.3, t('載入 OpenStreetMap 資料…', 'Loading OpenStreetMap data…'));
   const base = import.meta.env.BASE_URL + 'data/osm/';
   const [bj, rj, pj, lj, wj, fj] = await Promise.all(['buildings', 'roads', 'pois', 'landmarks', 'water', 'far'].map((n) => fetch(`${base}${n}.json`).then((r) => r.json())));
   const buildings: OsmBuilding[] = bj.buildings;
   const landmarks: { type: string; id: number; tags?: Record<string, string>; lat?: number; lon?: number; geometry?: [number, number][] }[] = lj.elements;
 
   // ── 大教堂 ──
-  progress(0.4, '建構大教堂…');
+  progress(0.4, t('建構大教堂…', 'Building the basilica…'));
   await nextFrame();
   const basilicaOsm = buildings.find((b) => b.id === 'w244159210')!;
   const basilicaFoot = cleanRing(basilicaOsm.rings[0].pts.map(([la, lo]) => toLocal(la, lo)));
@@ -56,7 +58,7 @@ async function main() {
   scene.add(basilica.group);
 
   // ── 柱廊與廣場 ──
-  progress(0.52, '建構貝尼尼柱廊…');
+  progress(0.52, t('建構貝尼尼柱廊…', "Building Bernini's colonnade…"));
   await nextFrame();
   const colStatues = landmarks
     .filter((e) => e.type === 'node' && e.tags?.height === '22' && (e.tags.historic === 'memorial' || e.tags.tourism === 'artwork'))
@@ -68,7 +70,7 @@ async function main() {
   scene.add(piazza.group);
 
   // ── 周邊街區 ──
-  progress(0.64, '建構周邊街區（OSM 建築與店家）…');
+  progress(0.64, t('建構周邊街區（OSM 建築與店家）…', 'Building the surrounding streets (OSM buildings and shops)…'));
   await nextFrame();
   const colonnadePolys: Vec2[][] = buildings.filter((b) => b.tags.name === 'Colonnato del Bernini').flatMap((b) => b.rings.map((r) => cleanRing(r.pts.map(([la, lo]) => toLocal(la, lo)))));
   const corridorRings: Vec2[][] = buildings.filter((b) => /Braccio di (Costantino|Carlo Magno)/.test(b.tags.name ?? '')).map((b) => cleanRing(b.rings[0].pts.map(([la, lo]) => toLocal(la, lo))));
@@ -83,11 +85,11 @@ async function main() {
     clearance: [offsetRing(basilicaFoot, 6), offsetRing(facadeBlock, 6), ...corridorRings.map((r) => offsetRing(r, 3))],
   });
   scene.add(city.group);
-  progress(0.72, '外圍羅馬市區…');
+  progress(0.72, t('外圍羅馬市區…', 'Outer Rome…'));
   await nextFrame();
   scene.add(buildFarCity(M, fj.b));
 
-  progress(0.78, '道路、綠地與台伯河…');
+  progress(0.78, t('道路、綠地與台伯河…', 'Roads, parks and the Tiber…'));
   await nextFrame();
   const skip: Vec2[][] = [piazzaOutline(), ...(retta ? [retta] : []), basilicaFoot, ...colonnadePolys];
   scene.add(buildStreets(M, rj.roads as OsmRoad[], rj.greens as OsmGreen[], wj.water as OsmWater[], skip));
@@ -130,27 +132,29 @@ async function main() {
     if (!h) return;
     const ud = h.object.userData;
     if (ud.kind === 'statues' && h.instanceId !== undefined) {
-      const name = ud.names[h.instanceId] || '聖人像';
-      const where = ud.tag === 'facade' ? '馬德諾立面頂端雕像（高約 5.7 m）' : ud.tag === 'colonnade' ? '貝尼尼柱廊頂上的聖人像（高約 3.1 m，共 140 尊）' : '大教堂台階前雕像';
-      panel.showInfo(name, `${where}。位置與名稱取自 OpenStreetMap。`);
+      const name = ud.names[h.instanceId] || t('聖人像', 'Statue of a saint');
+      const where = ud.tag === 'facade' ? t('馬德諾立面頂端雕像（高約 5.7 m）', "Statue on top of Maderno's facade (about 5.7 m tall)")
+        : ud.tag === 'colonnade' ? t('貝尼尼柱廊頂上的聖人像（高約 3.1 m，共 140 尊）', "Statue of a saint on Bernini's colonnade (about 3.1 m; 140 in all)")
+        : t('大教堂台階前雕像', 'Statue in front of the basilica steps');
+      panel.showInfo(name, `${where}${t('。位置與名稱取自 OpenStreetMap。', '. Position and name from OpenStreetMap.')}`);
       return;
     }
     if (ud.kind === 'signs' && h.instanceId !== undefined) {
       const kind = String(ud.kinds[h.instanceId]).replace(/^(shop|amenity|tourism):/, '');
-      panel.showInfo(ud.names[h.instanceId], `店家類型：${KIND_ZH[kind] ?? kind}（資料：OpenStreetMap）`);
+      panel.showInfo(ud.names[h.instanceId], t(`店家類型：${KIND_ZH[kind] ?? kind}（資料：OpenStreetMap）`, `Type: ${kind.replace(/_/g, ' ')} (data: OpenStreetMap)`));
       return;
     }
     if (h.object.parent === city.group || h.object.parent?.parent === city.group) {
       const p = h.point;
       const b = named.find((n) => pointInPolygon(p.x, p.z, n.ring));
-      if (b) panel.showInfo(b.name, '建築輪廓與高度取自 OpenStreetMap。');
+      if (b) panel.showInfo(b.name, t('建築輪廓與高度取自 OpenStreetMap。', 'Building outline and height from OpenStreetMap.'));
       return;
     }
     let lm = ud.landmark as string | undefined;
     if (lm === 'basilica') lm = h.point.y > 50 + DIM.basilica.floorY ? 'dome' : h.point.x > -205 ? 'facade' : 'basilica';
     if (lm === 'piazza') lm = Math.hypot(h.point.x, h.point.z) < 8 ? 'obelisk' : undefined;
     const info = lm ? LANDMARK_INFO[lm] : undefined;
-    if (info) panel.showInfo(info.title, info.text);
+    if (info) panel.showInfo(t(info.title, info.titleEn), t(info.text, info.textEn));
   });
 
   window.addEventListener('resize', () => R.resize());
@@ -179,10 +183,11 @@ async function main() {
   const enterInterior = async () => {
     if (!inExterior() || hooks.camera) return;
     const btn = document.getElementById('enter-church')!;
-    const label = btn.textContent;
-    if (!interior) btn.textContent = '載入教堂內部…';
+    const label = btn.querySelector('.enter-label') as HTMLElement;
+    const keep = label.innerHTML;
+    if (!interior) label.textContent = t('載入教堂內部…', 'Loading the interior…');
     const it = await loadInterior();
-    btn.textContent = label;
+    label.innerHTML = keep;
     it.enter();
   };
   /** 螢幕座標是否落在大教堂本體上（以畫布自身尺寸換算，避免視窗尺寸為 0 時誤判） */
@@ -226,7 +231,7 @@ async function main() {
   document.getElementById('enter-church')!.addEventListener('click', () => enterInterior());
 
   // ── 主迴圈 ──
-  progress(1, '完成');
+  progress(1, t('完成', 'Done'));
   document.getElementById('loading')!.classList.add('done');
   const clock = new THREE.Clock();
   let fpsAcc = 0, fpsN = 0, lowFrames = 0, highFrames = 0, downgrades = 0;
@@ -294,6 +299,21 @@ async function main() {
   }
   // 除錯用：在背景分頁中可手動推進畫面
   (window as unknown as { __app: unknown }).__app = { scene, camera, env, rig, R, M, frame, get interior() { return interior; }, loadInterior, enterInterior, hitsBasilicaNDC };
+  // 分享連結：#interior 直接進入教堂；#展品代號（如 #pieta）進入後前往該展品
+  const deep = decodeURIComponent(location.hash.slice(1));
+  if (deep) {
+    (async () => {
+      const [{ EXHIBITS }] = await Promise.all([import('./interior/exhibitsData')]);
+      const idx = EXHIBITS.findIndex((e) => e.id === deep);
+      if (deep !== 'interior' && idx < 0) return;
+      await new Promise((r) => setTimeout(r, 600));
+      await enterInterior();
+      const it = interior!;
+      const wait = () => new Promise<void>((r) => { const k = () => (it.mode === 'interior' && !it.transitioning ? r() : setTimeout(k, 100)); k(); });
+      await wait();
+      if (idx >= 0) it.tour.goTo(idx);
+    })();
+  }
   // 載入完成後閒置時預先載入內部（不阻塞首屏）
   const idle = (cb: () => void) => ('requestIdleCallback' in window ? (window as unknown as { requestIdleCallback: (f: () => void, o: object) => void }).requestIdleCallback(cb, { timeout: 8000 }) : setTimeout(cb, 4000));
   setTimeout(() => idle(() => { loadInterior().then((it) => idle(() => it.precompile())); }), 2500);
@@ -307,5 +327,5 @@ const KIND_ZH: Record<string, string> = {
 
 main().catch((e) => {
   console.error(e);
-  loadText.textContent = '載入失敗：' + (e?.message ?? e);
+  loadText.textContent = t('載入失敗：', 'Failed to load: ') + (e?.message ?? e);
 });

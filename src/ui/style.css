@@ -185,3 +185,11 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
 
 .int-art { flex-basis: 100%; font-size: 11px; color: var(--dim); }
 .int-art a { color: var(--gold); }
+
+/* ── 中英雙語：依 <html data-lang> 顯示其一 ── */
+html[data-lang="en"] .zh, html:not([data-lang="en"]) .en { display: none !important; }
+.lang-row { display: flex; gap: 6px; padding-top: 8px; }
+#hint > .zh, #hint > .en { display: contents; }
+.int-share { color: var(--dim) !important; }
+.int-lang { padding: 8px 12px !important; letter-spacing: 0.05em !important; }
+.int-exit { white-space: nowrap; }

@@ -1,17 +1,17 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-export interface Viewpoint { id: string; name: string; pos: [number, number, number]; target: [number, number, number]; }
+export interface Viewpoint { id: string; name: string; en: string; pos: [number, number, number]; target: [number, number, number]; }
 
 export const VIEWPOINTS: Viewpoint[] = [
-  { id: 'aerial', name: '空拍全景', pos: [260, 230, 330], target: [-140, 30, 0] },
-  { id: 'conciliazione', name: '協和大道遠眺', pos: [430, 4.5, 3], target: [-200, 55, 4] },
-  { id: 'obelisk', name: '方尖碑前', pos: [45, 1.7, -6], target: [-189, 28, 4] },
-  { id: 'centro', name: '柱廊中心（四列柱重疊）', pos: [0.9, 1.7, 27], target: [0.9, 6, 100] },
-  { id: 'steps', name: '大教堂台階', pos: [-118, 2.9, -22], target: [-189, 30, 6] },
-  { id: 'loggia', name: '祝福陽台望向廣場', pos: [-178, 24, 4.4], target: [60, 0, 0] },
-  { id: 'cupola', name: '穹頂觀景台', pos: [-309, 116, 7], target: [0, 0, 0] },
-  { id: 'colonnade', name: '柱廊走道', pos: [-55, 2.0, -78], target: [40, 3, -88] },
+  { id: 'aerial', name: '空拍全景', en: 'Aerial view', pos: [260, 230, 330], target: [-140, 30, 0] },
+  { id: 'conciliazione', name: '協和大道遠眺', en: 'From Via della Conciliazione', pos: [430, 4.5, 3], target: [-200, 55, 4] },
+  { id: 'obelisk', name: '方尖碑前', en: 'By the obelisk', pos: [45, 1.7, -6], target: [-189, 28, 4] },
+  { id: 'centro', name: '柱廊中心（四列柱重疊）', en: 'Colonnade centre (rows align)', pos: [0.9, 1.7, 27], target: [0.9, 6, 100] },
+  { id: 'steps', name: '大教堂台階', en: 'Basilica steps', pos: [-118, 2.9, -22], target: [-189, 30, 6] },
+  { id: 'loggia', name: '祝福陽台望向廣場', en: 'From the Loggia of Blessings', pos: [-178, 24, 4.4], target: [60, 0, 0] },
+  { id: 'cupola', name: '穹頂觀景台', en: 'Dome terrace', pos: [-309, 116, 7], target: [0, 0, 0] },
+  { id: 'colonnade', name: '柱廊走道', en: 'Colonnade walkway', pos: [-55, 2.0, -78], target: [40, 3, -88] },
 ];
 
 export type CamMode = 'orbit' | 'fly';

@@ -295,6 +295,25 @@ export function buildInterior(M: MaterialLibrary): InteriorBuild {
       arch.translate(ax * IN.archPlane, IN.spring, az * IN.archPlane);
       b.add(mats.gold, arch);
     }
+    // 四個帆拱上的大圓章（實為四福音作者的馬賽克，此處只表現金框與藍金色塊，不仿造人物）
+    {
+      const ringBlue = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.11, 0.17, 0.34), roughness: 0.45, metalness: 0.2 });
+      const warm = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.55, 0.42, 0.26), roughness: 0.5, metalness: 0.15 });
+      const R = IN.pendSphereR, dy = 8.5, hd = Math.sqrt(R * R - dy * dy) - 0.25;
+      const o = new THREE.Object3D();
+      for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        o.position.set(sx * hd / Math.SQRT2, IN.spring + dy, sz * hd / Math.SQRT2);
+        o.lookAt(0, IN.spring, 0);
+        o.updateMatrix();
+        const parts: [THREE.Material, THREE.BufferGeometry][] = [
+          [mats.gold, new THREE.RingGeometry(3.85, 4.35, 64)],
+          [ringBlue, new THREE.RingGeometry(3.15, 3.85, 64).translate(0, 0, -0.02)],
+          [mats.gold, new THREE.RingGeometry(3.0, 3.15, 64)],
+          [warm, new THREE.CircleGeometry(3.0, 64).translate(0, 0, -0.03)],
+        ];
+        for (const [m, g] of parts) { g.applyMatrix4(o.matrix); b.add(m, g); }
+      }
+    }
     // 環形簷口 + 銘文帶
     b.add(mats.gold, lathe([[IN.domeR + 0.9, IN.ringY], [IN.domeR + 0.9, IN.ringY + 0.5], [IN.domeR - 0.6, IN.ringY + 0.5], [IN.domeR - 0.6, IN.ringY]], 128));
     // 文字帶使用 UV（inward 會移除 uv），因此以 BackSide 從內側顯示

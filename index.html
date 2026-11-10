@@ -12,83 +12,88 @@
   <div id="loading">
     <div class="load-inner">
       <div class="load-title">Basilica di San Pietro</div>
-      <div class="load-sub">聖彼得大教堂 · 3D 觀覽</div>
+      <div class="load-sub"><span class="zh">聖彼得大教堂 · 3D 觀覽</span><span class="en">St. Peter's Basilica · 3D</span></div>
       <div class="bar"><div id="load-bar"></div></div>
-      <div id="load-text">載入中…</div>
+      <div id="load-text"><span class="zh">載入中…</span><span class="en">Loading…</span></div>
     </div>
   </div>
 
   <header id="brand">
-    <div class="t1">聖彼得大教堂</div>
-    <div class="t2">Basilica Papale di San Pietro in Vaticano · 3D 觀覽</div>
+    <div class="t1"><span class="zh">聖彼得大教堂</span><span class="en">St. Peter's Basilica</span></div>
+    <div class="t2">Basilica Papale di San Pietro in Vaticano · <span class="zh">3D 觀覽</span><span class="en">3D Viewer</span></div>
   </header>
 
   <aside id="panel">
-    <button id="panel-toggle" aria-label="收合面板">⟩</button>
+    <button id="panel-toggle" data-aria-zh="收合面板" data-aria-en="Collapse panel">⟩</button>
     <div class="panel-body">
+      <section class="lang-row">
+        <button class="chip lang-btn" data-lang="zh">中文</button>
+        <button class="chip lang-btn" data-lang="en">English</button>
+      </section>
       <section>
-        <h3>時間 <span id="clock-label" class="mono">10:30</span></h3>
+        <h3><span class="zh">時間</span><span class="en">Time</span> <span id="clock-label" class="mono">10:30</span></h3>
         <input type="range" id="time" min="0" max="24" step="0.0166667" value="10.5" />
-        <div class="sun-times"><span id="sunrise">日出 --:--</span><span id="sunset">日落 --:--</span></div>
+        <div class="sun-times"><span id="sunrise"></span><span id="sunset"></span></div>
         <div class="row">
           <input type="date" id="date" />
-          <button id="flow" class="chip" title="時間流動（每秒 2 分鐘）">▶ 流動</button>
+          <button id="flow" class="chip" data-title-zh="時間流動（每秒 2 分鐘）" data-title-en="Let time run (2 minutes per second)">▶</button>
         </div>
         <div class="chips" id="presets">
-          <button class="chip" data-t="sunrise">清晨</button>
-          <button class="chip" data-t="noon">正午</button>
-          <button class="chip" data-t="sunset">黃昏</button>
-          <button class="chip" data-t="night">夜晚</button>
+          <button class="chip" data-t="sunrise"><span class="zh">清晨</span><span class="en">Dawn</span></button>
+          <button class="chip" data-t="noon"><span class="zh">正午</span><span class="en">Noon</span></button>
+          <button class="chip" data-t="sunset"><span class="zh">黃昏</span><span class="en">Dusk</span></button>
+          <button class="chip" data-t="night"><span class="zh">夜晚</span><span class="en">Night</span></button>
         </div>
       </section>
       <section>
-        <h3>季節</h3>
+        <h3><span class="zh">季節</span><span class="en">Season</span></h3>
         <div class="chips" id="seasons">
-          <button class="chip" data-s="spring">春</button>
-          <button class="chip" data-s="summer">夏</button>
-          <button class="chip" data-s="autumn">秋</button>
-          <button class="chip" data-s="winter">冬</button>
+          <button class="chip" data-s="spring"><span class="zh">春</span><span class="en">Spring</span></button>
+          <button class="chip" data-s="summer"><span class="zh">夏</span><span class="en">Summer</span></button>
+          <button class="chip" data-s="autumn"><span class="zh">秋</span><span class="en">Autumn</span></button>
+          <button class="chip" data-s="winter"><span class="zh">冬</span><span class="en">Winter</span></button>
         </div>
       </section>
       <section>
-        <h3>天氣</h3>
+        <h3><span class="zh">天氣</span><span class="en">Weather</span></h3>
         <div class="chips" id="weathers">
-          <button class="chip" data-w="clear">☀︎ 晴</button>
-          <button class="chip" data-w="cloudy">⛅︎ 多雲</button>
-          <button class="chip" data-w="overcast">☁︎ 陰</button>
-          <button class="chip" data-w="rain">☂︎ 雨</button>
-          <button class="chip" data-w="fog">≋ 霧</button>
-          <button class="chip" data-w="snow">❄︎ 雪</button>
+          <button class="chip" data-w="clear">☀︎ <span class="zh">晴</span><span class="en">Clear</span></button>
+          <button class="chip" data-w="cloudy">⛅︎ <span class="zh">多雲</span><span class="en">Cloudy</span></button>
+          <button class="chip" data-w="overcast">☁︎ <span class="zh">陰</span><span class="en">Overcast</span></button>
+          <button class="chip" data-w="rain">☂︎ <span class="zh">雨</span><span class="en">Rain</span></button>
+          <button class="chip" data-w="fog">≋ <span class="zh">霧</span><span class="en">Fog</span></button>
+          <button class="chip" data-w="snow">❄︎ <span class="zh">雪</span><span class="en">Snow</span></button>
         </div>
       </section>
       <section>
-        <h3>視角</h3>
-        <button class="chip enter-btn" id="enter-church">⛪︎ 進入教堂內部（或雙擊教堂）</button>
+        <h3><span class="zh">視角</span><span class="en">Views</span></h3>
+        <button class="chip enter-btn" id="enter-church">⛪︎ <span class="enter-label"><span class="zh">進入教堂內部（或雙擊教堂）</span><span class="en">Go inside (or double-click the basilica)</span></span></button>
         <div class="views" id="views"></div>
         <div class="chips">
-          <button class="chip" id="mode-orbit">環繞觀覽</button>
-          <button class="chip" id="mode-fly">自由飛行 (F)</button>
+          <button class="chip" id="mode-orbit"><span class="zh">環繞觀覽</span><span class="en">Orbit</span></button>
+          <button class="chip" id="mode-fly"><span class="zh">自由飛行 (F)</span><span class="en">Fly (F)</span></button>
         </div>
       </section>
       <section>
-        <h3>畫質 <span id="fps" class="mono dim"></span></h3>
+        <h3><span class="zh">畫質</span><span class="en">Quality</span> <span id="fps" class="mono dim"></span></h3>
         <div class="chips" id="quality">
-          <button class="chip" data-q="high">高</button>
-          <button class="chip" data-q="medium">中</button>
-          <button class="chip" data-q="low">低</button>
+          <button class="chip" data-q="high"><span class="zh">高</span><span class="en">High</span></button>
+          <button class="chip" data-q="medium"><span class="zh">中</span><span class="en">Medium</span></button>
+          <button class="chip" data-q="low"><span class="zh">低</span><span class="en">Low</span></button>
         </div>
       </section>
       <section class="foot">
-        <button class="link" id="about-open">關於本模型與資料來源</button>
+        <button class="link" id="about-open"><span class="zh">關於本模型與資料來源</span><span class="en">About this model and its sources</span></button>
       </section>
     </div>
   </aside>
 
   <div id="hint">
-    <span><b>拖曳</b> 旋轉</span><span><b>右鍵 / 雙指</b> 平移</span><span><b>滾輪</b> 縮放</span><span><b>WASD</b> 移動</span><span><b>F</b> 飛行模式</span><span><b>點擊</b> 雕像、店家、建築</span><span><b>雙擊（手機雙點）教堂</b> 進入內部</span>
+    <span class="zh"><span><b>拖曳</b> 旋轉</span><span><b>右鍵 / 雙指</b> 平移</span><span><b>滾輪</b> 縮放</span><span><b>WASD</b> 移動</span><span><b>F</b> 飛行模式</span><span><b>點擊</b> 雕像、店家、建築</span><span><b>雙擊（手機雙點）教堂</b> 進入內部</span></span>
+    <span class="en"><span><b>Drag</b> rotate</span><span><b>Right-drag / two fingers</b> pan</span><span><b>Wheel</b> zoom</span><span><b>WASD</b> move</span><span><b>F</b> fly mode</span><span><b>Click</b> statues, shops, buildings</span><span><b>Double-click (double-tap) the basilica</b> to go inside</span></span>
   </div>
 
-  <div id="enter-tip">雙擊進入教堂內部</div>
+  <div id="enter-tip"><span class="zh">雙擊進入教堂內部</span><span class="en">Double-click to go inside</span></div>
   <div id="info" class="hidden">
     <button class="close" id="info-close">×</button>
     <div id="info-title"></div>
@@ -98,6 +103,7 @@
   <div id="about" class="hidden">
     <div class="about-card">
       <button class="close" id="about-close">×</button>
+      <div class="zh">
       <h2>關於本模型</h2>
       <p>本觀覽以真實資料重建聖彼得大教堂、聖彼得廣場與 Borgo 周邊街區，不加入虛構物件。</p>
       <h4>資料來源</h4>
@@ -110,13 +116,13 @@
       </ul>
       <h4>簡化說明</h4>
       <ul>
-        <li>雕像以「位置、數量、比例正確」的簡化著袍人像表示，無法逐尊還原雕刻細節。</li>
+        <li>雕像為本站依實拍照片的姿勢與持物製作的簡化造型，並非掃描，無法逐尊還原雕刻細節。</li>
         <li>周邊建築立面為依 OSM 輪廓與高度產生的羅馬式立面；招牌僅使用 OSM 上真實存在的店名，沒有資料的店面不放招牌。</li>
         <li>地形以平面處理（梵蒂岡山丘的坡度未建模）。</li>
       </ul>
       <h4>影像與 3D 模型來源</h4>
       <ul>
-        <li>祭壇畫、浮雕與銅門影像取自維基共享資源，依各檔授權標示（CC BY-SA 影像依相同授權）；找不到教堂內實拍的祭台改用原畫影像並在解說卡註明：
+        <li>祭壇畫、浮雕與銅門影像取自維基共享資源，依各檔授權標示（CC BY-SA 影像依相同授權）；找不到教堂內實拍的祭台改用原畫影像並在解說卡註明，仍找不到影像的維持深色畫板：
         <ul>
           <li>主顯聖容祭台：<a href="https://commons.wikimedia.org/wiki/File:Verkl%C3%A4rung_Christi_Petersdom_Rom_Mosaik_nach_Raffaello-Gem%C3%A4lde.jpg" target="_blank" rel="noopener">Ricardalovesmonuments</a> · CC BY-SA 4.0</li>
           <li>聖額我略一世祭台：<a href="https://commons.wikimedia.org/wiki/File:Vatikan,_Petersdom,_Altar_von_Gregor_der_Gro%C3%9Fe.JPG" target="_blank" rel="noopener">Dguendel</a> · CC BY 3.0</li>
@@ -134,19 +140,67 @@
           <li>聖伊拉斯謨（原畫草稿）：<a href="https://commons.wikimedia.org/wiki/File:Martyr_de_saint_Erasme-Modello_-_Poussin_-_MBACanada.jpg" target="_blank" rel="noopener">Nicolas Poussin（原畫草稿）</a> · 公有領域</li>
           <li>菲拉雷特銅門：<a href="https://commons.wikimedia.org/wiki/File:S._Peter,_Rome,_Italy._(2831670402).jpg" target="_blank" rel="noopener">Brooklyn Museum</a> · 無已知著作權限制</li>
         </ul></li>
-        <li>四柱巨像、青銅聖彼得像、教宗像、獅子與騎馬像為本站以 Blender 依實拍照片的姿勢與持物製作的簡化造型（tools/sculpt），並非掃描。</li>
+        <li>雕像造型由 tools/sculpt 的 Blender 腳本產生。</li>
         <li>真實 3D 掃描只收錄出處與授權皆可查證者（CC BY / CC BY-NC），檔案加入後於解說卡顯示「真實 3D 掃描」按鈕。</li>
       </ul>
       <h4>教堂內部導覽</h4>
       <ul>
         <li>雙擊教堂（或按「進入教堂內部」）經光之門進入。內部依真實尺寸建模：內部長 186.3 m、中殿拱頂 45.5 m、穹頂內徑 41.5 m、地面至燈籠亭內頂 117.57 m。</li>
-        <li>47 張解說卡、涵蓋柱廊、中殿、側廊、交叉部、兩耳堂、後殿與兩座後殿轉角禮拜堂，包括 39 尊修會創辦人像；可選「精選」或依官方平面圖參觀順序的「完整路線」。</li>
+        <li>47 張解說卡，涵蓋柱廊、中殿、側廊、交叉部、兩耳堂、後殿與兩座後殿轉角禮拜堂，包括 39 尊修會創辦人像；可選「精選」或依官方平面圖參觀順序的「完整路線」。每件展品都有自己的網址，可直接分享。</li>
         <li>修會創辦人像依官方位置圖分區擺放；同一區內各尊對應哪個壁龕，官方圖示無法辨識，因此雕像不逐一標名，改以分區名單呈現。</li>
-        <li>真實 3D 掃描只採用出處與授權都經查證的檔案：目前僅有聖殤的聖母局部（大都會博物館經梵蒂岡博物館授權以原作翻模之翻模件，Cosmo Wenman 掃描，CC BY），其餘作品尚無合格掃描，維持簡化造型。</li>
         <li>解說依 stpetersbasilica.info 各展品頁（含所引梵蒂岡官方導覽文字）與 Wikipedia 撰寫，每張解說卡都附資料來源；各來源說法不一處以「一說」標註或不寫。</li>
-        <li>展品位置依官方平面圖近似擺放；雕塑與紀念碑為比例近似的簡化造型，祭壇畫以深色畫板表示、不仿造畫面，之後可換成真實 3D 掃描。</li>
-        <li>室內光束方向依外部當下的真實太陽位置計算；夜間改為暖色燈光。</li>
+        <li>展品位置依官方平面圖近似擺放。室內光束方向依外部當下的真實太陽位置計算；夜間改為暖色燈光。</li>
       </ul>
+      </div>
+      <div class="en">
+      <h2>About this model</h2>
+      <p>This viewer rebuilds St. Peter's Basilica, St. Peter's Square and the surrounding Borgo district from real data. Nothing fictional is added.</p>
+      <h4>Data sources</h4>
+      <ul>
+        <li>Building outlines and heights, roads, trees, street lamps and shop names: © OpenStreetMap contributors (ODbL 1.0)</li>
+        <li>Positions and names of the 140 colonnade statues and the 13 facade statues: OpenStreetMap</li>
+        <li>Key dimensions: facade 114.69 m wide and 45.55 m high; top of the dome cross 136.57 m; obelisk shaft 25.5 m (Wikipedia and other references)</li>
+        <li>Sun and moon positions: computed live for Rome's latitude and longitude and the chosen date and time (SunCalc)</li>
+        <li>Material textures: ambientCG (CC0)</li>
+      </ul>
+      <h4>Simplifications</h4>
+      <ul>
+        <li>Statues are simplified figures made for this site, posed and given their attributes from real photographs. They are not scans and cannot reproduce the carving in detail.</li>
+        <li>Surrounding facades are Roman-style elevations generated from OSM outlines and heights. Signs only use shop names that exist in OSM; shopfronts without data have no sign.</li>
+        <li>The ground is flat (the slope of the Vatican hill is not modelled).</li>
+      </ul>
+      <h4>Image and 3D model sources</h4>
+      <ul>
+        <li>Altarpiece, relief and door images come from Wikimedia Commons and carry each file's licence (CC BY-SA images under the same licence). Where no photo from inside the basilica exists, the card shows the original painting and says so; altars with no usable image keep a dark panel:
+        <ul>
+          <li>Altar of the Transfiguration: <a href="https://commons.wikimedia.org/wiki/File:Verkl%C3%A4rung_Christi_Petersdom_Rom_Mosaik_nach_Raffaello-Gem%C3%A4lde.jpg" target="_blank" rel="noopener">Ricardalovesmonuments</a> · CC BY-SA 4.0</li>
+          <li>Altar of St Gregory the Great: <a href="https://commons.wikimedia.org/wiki/File:Vatikan,_Petersdom,_Altar_von_Gregor_der_Gro%C3%9Fe.JPG" target="_blank" rel="noopener">Dguendel</a> · CC BY 3.0</li>
+          <li>Altar of St Jerome: <a href="https://commons.wikimedia.org/wiki/File:St_Jerome_in_Saint_Peter%27s_Basilica.jpg" target="_blank" rel="noopener">Karelj</a> · Public domain</li>
+          <li>Altar of St Sebastian: <a href="https://commons.wikimedia.org/wiki/File:Saint_Peter%27s_Basilica_Saint_Sebastian_chapel_2020_P01_Martyrdom_of_Saint_Sebastian.jpg" target="_blank" rel="noopener">Fallaner</a> · CC BY-SA 4.0</li>
+          <li>Baptistery altarpiece: <a href="https://commons.wikimedia.org/wiki/File:Jesus%27_Baptism_in_St._Peter%27s_Basilica.jpg" target="_blank" rel="noopener">Burkhard Mücke</a> · CC BY-SA 4.0</li>
+          <li>Altar of the Sacred Heart: <a href="https://commons.wikimedia.org/wiki/File:St._Margaret_Mary_Alacoque,_in_St._Peter%E2%80%99s_Basilica.jpg" target="_blank" rel="noopener">Mark Laurance</a> · CC0</li>
+          <li>Altar of St Joseph: <a href="https://commons.wikimedia.org/wiki/File:Altar_of_Saint_Joseph_in_Saint_Peter%27s_Basilica.jpg" target="_blank" rel="noopener">Karelj</a> · Public domain</li>
+          <li>Altar of Our Lady of Succour: <a href="https://commons.wikimedia.org/wiki/File:Altar_of_Our_Lady_of_Succour.jpg" target="_blank" rel="noopener">Cristian Bortes from Cluj-Napoca, Romania</a> · CC BY 2.0</li>
+          <li>Relief of St Leo the Great: <a href="https://commons.wikimedia.org/wiki/File:Alessandro_Algardi,_altare_di_san_leone_magno_(1645-53).JPG" target="_blank" rel="noopener">Sailko</a> · CC BY-SA 3.0</li>
+          <li>St Petronilla (original painting): <a href="https://commons.wikimedia.org/wiki/File:Guercino_-_Burial_of_Saint_Petronilla_-_Google_Art_Project.jpg" target="_blank" rel="noopener">Guercino (painter)</a> · Public domain</li>
+          <li>St Michael (original painting): <a href="https://commons.wikimedia.org/wiki/File:GuidoReni_MichaelDefeatsSatan.jpg" target="_blank" rel="noopener">Guido Reni (painter)</a> · Public domain</li>
+          <li>Crucifixion of St Peter (original painting): <a href="https://commons.wikimedia.org/wiki/File:Guido_Reni,_Crocifissione_di_San_Pietro,_1604-05_-FG.jpg" target="_blank" rel="noopener">Fabrizio Garrisi (photo)</a> · CC BY-SA 4.0</li>
+          <li>Sts Processus and Martinian (original painting): <a href="https://commons.wikimedia.org/wiki/File:Martyrdom_of_St_Processo_and_St_Martiniano,_by_Valentin_de_Boulogne.jpg" target="_blank" rel="noopener">Valentin de Boulogne (painter)</a> · Public domain</li>
+          <li>St Erasmus (oil sketch): <a href="https://commons.wikimedia.org/wiki/File:Martyr_de_saint_Erasme-Modello_-_Poussin_-_MBACanada.jpg" target="_blank" rel="noopener">Nicolas Poussin (sketch)</a> · Public domain</li>
+          <li>Filarete Door: <a href="https://commons.wikimedia.org/wiki/File:S._Peter,_Rome,_Italy._(2831670402).jpg" target="_blank" rel="noopener">Brooklyn Museum</a> · No known copyright restrictions</li>
+        </ul></li>
+        <li>Statue shapes are generated by the Blender scripts in tools/sculpt.</li>
+        <li>Real 3D scans are included only when both their source and licence can be verified (CC BY / CC BY-NC). Once a scan file is added, its card shows a "Real 3D scan" button.</li>
+      </ul>
+      <h4>Interior tour</h4>
+      <ul>
+        <li>Double-click the basilica (or press "Go inside") to pass through the Gate of Light. The interior is built at real scale: 186.3 m long inside, nave vault 45.5 m, dome 41.5 m across, 117.57 m from the floor to the lantern.</li>
+        <li>47 cards cover the portico, nave, aisles, crossing, both transepts, the apse and the two apse corner chapels, including 39 statues of founder saints. Choose the highlights tour or the full route in the order of the official floor plan. Every exhibit has its own link you can share.</li>
+        <li>Founder statues are placed by section, following the official location map. Which niche holds which saint cannot be read from the official diagram, so the statues are not labelled one by one; each section's card lists its names instead.</li>
+        <li>Texts are based on the item pages of stpetersbasilica.info (including the Vatican guide texts they quote) and Wikipedia, and every card lists its sources. Where sources disagree, the card says so or leaves the detail out.</li>
+        <li>Exhibits are placed approximately according to the official floor plan. Interior light shafts follow the real sun position outside; at night the lighting turns warm.</li>
+      </ul>
+      </div>
     </div>
   </div>
 

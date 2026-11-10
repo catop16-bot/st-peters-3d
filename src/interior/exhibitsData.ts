@@ -36,6 +36,8 @@ export interface Exhibit {
   scan?: { url: string; title: string; credit: string; license: string; source: string };
   /** 場景中使用的真實影像（credits.ts 的鍵） */
   art?: string[];
+  /** 祭壇畫找不到可用影像（以深色畫板表示）時的說明 */
+  noImage?: string;
 }
 
 const SP = 'https://www.stpetersbasilica.info';
@@ -54,6 +56,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '描繪耶穌在水面行走、向船上門徒伸手的場景。原本是 Stefaneschi 樞機在 1298 年為舊聖彼得大教堂訂製的作品，後來移到柱廊，位於中央入口上方的弦月面，經過多次修復，今天所見大多是後世重做的部分。',
     station: [120.5, 1.7, 0], look: [131, 10.5, 0], hotspot: [130, 12.4, 4.8], fov: 55, featured: true,
     sources: [`${SP}/Interior/Navicella/Navicella.htm`],
+    noImage: '喬托《小船》',
   },
   {
     id: 'constantine', zone: 'portico', title: '君士坦丁騎馬像', subtitle: '貝尼尼 · 1654 年受託，1670 年完成',
@@ -182,6 +185,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '中央是聖若瑟祭台：Achille Funi 1961 年的原畫於 1963 年製成馬賽克，同年 3 月 19 日由若望二十三世祝福；祭台下的古代石棺安放聖西滿與聖猶達·達陡的聖髑。右側是聖多默祭台，馬賽克依 Vincenzo Camuccini 的原畫描繪「多默的疑惑」，祭台下有教宗聖鮑尼法斯四世的聖髑。左側是聖伯多祿倒釘十字架祭台，馬賽克依 Guido Reni 的原畫製作，原畫今藏梵蒂岡美術館。',
     station: [0, 1.7, 45], look: [0, 6, 68], hotspot: [2.5, 11.5, 66.5], fov: 62,
     sources: [`${SP}/Altars/StJoseph/StJoseph.htm`, `${SP}/Altars/StThomas/StThomas.htm`, `${SP}/Altars/CrucifixionStPeter/CrucifixionStPeter.htm`],
+    noImage: '聖多默祭台',
     art: ['joseph', 'crucifixion'],
   },
   {
@@ -203,12 +207,14 @@ export const EXHIBITS: Exhibit[] = [
     text: '描繪宗徒大事錄第 3 章：伯多祿在聖殿門口治好生來瘸腿的人。原畫為 Francesco Mancini 1748 年所作，馬賽克於 1751–58 年完成。此處最早的祭壇畫是 Cigoli 1604–06 年的作品，今已失傳。',
     station: [-40, 1.7, 48], look: [-43.5, 5, 56], hotspot: [-41, 9.5, 55], fov: 58,
     sources: [`${SP}/Altars/StPeter-Cripple/StPeter-Cripple.htm`],
+    noImage: '治癒癱子祭台',
   },
   {
     id: 'column', zone: 'swchapel', title: '圓柱聖母禮拜堂與祭台', subtitle: '禮拜堂：Giacomo della Porta 設計 · 聖像 1607 年安置',
     text: '大教堂後殿一側的轉角禮拜堂，又稱聖良禮拜堂，小穹頂內飾有聖母德敘禱文的圖樣。祭台上的聖母像畫在舊聖彼得大教堂中殿的一根大理石柱上，1607 年保祿五世時安置於此，1645 年加冕；1964 年保祿六世以「教會之母」稱號尊崇她。祭台下的 4 世紀石棺中安放教宗良二世、良三世、良四世的遺骸。',
     station: [-44, 1.7, 40], look: [-33, 5, 40], hotspot: [-34, 9.5, 42.5], fov: 60, featured: true,
     sources: [`${SP}/Altars/ColumnChapel/ColumnChapel.htm`, `${SP}/Altars/OurLadyColumn/OurLadyColumn.htm`],
+    noImage: '圓柱聖母像',
   },
   {
     id: 'leo', zone: 'swchapel', title: '聖良一世祭台', subtitle: 'Alessandro Algardi · 1646–1653 · 大理石高浮雕',
@@ -274,12 +280,14 @@ export const EXHIBITS: Exhibit[] = [
     text: '描繪宗徒大事錄第 9 章，伯多祿使約培的女門徒塔比莎死而復活。原畫由 Placido Costanzi 繪製，今藏羅馬天使與殉道者聖母大殿；祭台兩旁是灰色花崗岩柱。',
     station: [-44, 1.7, -40], look: [-33, 5, -40], hotspot: [-34, 9.5, -42.5], fov: 58,
     sources: [`${SP}/Altars/StPeter-Tabitha/StPeter-Tabitha.htm`],
+    noImage: '塔比莎祭台',
   },
   {
     id: 'navaltar', zone: 'nwchapel', title: '《小船》祭台', subtitle: 'Giovanni Lanfranco 原作 · 1726/27 年製成馬賽克',
     text: '位於聖海倫娜巨柱背面，與柱廊上喬托的《小船》是不同作品。描繪在水面上將要下沉的伯多祿向耶穌求救。祭壇畫依 Lanfranco 1628 年完成的壁畫製成馬賽克；兩旁的 brocatello 大理石柱是大教堂中僅有的一對。祭台下有聖曼蘇埃圖斯與聖霍內斯圖斯的聖髑。',
     station: [-37.5, 1.7, -43], look: [-37.5, 5, -33], hotspot: [-35, 9.5, -34], fov: 58,
     sources: [`${SP}/Altars/Navicella/Navicella.htm`],
+    noImage: '《小船》祭台',
   },
   // ── 右耳堂 ──
   {
@@ -293,6 +301,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '中央是聖普羅策素與瑪爾定祭台，馬賽克依 Valentin de Boulogne 的原畫製作（原畫今藏梵蒂岡美術館），祭台下的斑岩甕安放兩位聖人的聖髑。左側是聖伊拉斯謨祭台，馬賽克依普桑（Nicolas Poussin）1628–29 年的原畫製作，原畫同樣藏於梵蒂岡美術館。右側是聖文策老祭台，馬賽克依 Angelo Caroselli 的原畫製作，兩旁另有聖濟利祿與聖默道的馬賽克。',
     station: [0, 1.7, -45], look: [0, 6, -68], hotspot: [-2.5, 11.5, -66.5], fov: 62,
     sources: [`${SP}/Altars/StsProcessus&Martinian/StsProcessus&Martinian.htm`, `${SP}/Altars/StErasmus/StErasmus.htm`, `${SP}/Altars/StWenceslas/StWenceslas.htm`],
+    noImage: '聖文策老祭台',
     art: ['processus', 'erasmus'],
   },
   // ── 中殿右側與右側廊（回程） ──
@@ -321,6 +330,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '右側廊最大的禮拜堂，現實中僅供祈禱者進入，所以這裡只在鐵門外觀看。內有貝尼尼設計的鍍金青銅與青金石聖體龕，造型取自布拉曼特的小聖堂，兩旁跪著兩位鍍金青銅天使；祭壇畫是 Pietro da Cortona 的《聖三》。入口鐵門由博羅米尼設計。',
     station: [82, 1.7, -22], look: [82, 5, -33], hotspot: [85, 9.5, -32], fov: 58,
     sources: [`${SP}/Altars/BlSacrament/BlSacrament.htm`],
+    noImage: '《聖三》',
   },
   {
     id: 'matilda', zone: 'naisle', title: '瑪蒂爾達女伯爵紀念碑', subtitle: '貝尼尼與工作室 · 1633–1637 · 大理石',

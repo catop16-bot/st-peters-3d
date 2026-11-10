@@ -11,6 +11,7 @@ import { InteriorLighting } from './Lighting';
 import { buildExhibits, type ExhibitBuild } from './Exhibits';
 import { TourController } from './TourController';
 import { InteriorUI } from './InteriorUI';
+import { FloorReflections } from './Reflections';
 
 interface Deps {
   M: MaterialLibrary;
@@ -37,6 +38,7 @@ export class InteriorMode {
   exhibits: ExhibitBuild;
   tour: TourController;
   ui: InteriorUI;
+  refl: FloorReflections;
   private tl: { kind: 'enter' | 'exit'; t: number; swapped: boolean; path?: THREE.CatmullRomCurve3; look0?: THREE.Vector3; look1?: THREE.Vector3 } | null = null;
   private saved = { pos: new THREE.Vector3(), target: new THREE.Vector3(), fov: 50, near: 0.5, far: 40000 };
   private exitPose = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
@@ -51,6 +53,7 @@ export class InteriorMode {
     this.tour = new TourController(d.camera, d.canvas);
     this.tour.pickables = this.exhibits.pickables;
     this.ui = new InteriorUI(this.tour);
+    this.refl = new FloorReflections(this.build.scene, this.build.mats.floor);
     this.ui.onExit = () => this.exit();
     window.addEventListener('keydown', (e) => { if (e.code === 'Escape' && this.mode === 'interior' && !this.tl) this.exit(); });
   }
@@ -122,6 +125,8 @@ export class InteriorMode {
     R.portal.time = G.uTime.value;
     if (this.mode === 'interior') {
       this.lighting.update(this.d.env);
+      this.refl.enabled = R.quality !== 'low';
+      this.refl.update(R.renderer, camera.position.x, this.d.env.night);
       this.exhibits.update(G.uTime.value, this.tour.active);
       this.ui.update();
     }

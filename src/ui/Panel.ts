@@ -3,6 +3,7 @@ import { romeDate } from '../env/Environment';
 import type { CameraRig } from '../controls/CameraRig';
 import { VIEWPOINTS } from '../controls/CameraRig';
 import type { Quality } from '../core/Renderer';
+import { t as tr, setLang, onLang, applyLang, type Lang } from '../i18n';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const fmt = (h: number) => {
@@ -40,12 +41,18 @@ export class Panel {
       b.addEventListener('click', () => { env.setWeather(b.dataset.w as Weather); this.sync(); });
     }
     const views = $('views');
-    for (const v of VIEWPOINTS) {
+    const viewBtns = VIEWPOINTS.map((v) => {
       const btn = document.createElement('button');
-      btn.textContent = v.name;
       btn.addEventListener('click', () => rig.goTo(v));
       views.appendChild(btn);
-    }
+      return btn;
+    });
+    const labelViews = () => viewBtns.forEach((b, i) => { b.textContent = tr(VIEWPOINTS[i].name, VIEWPOINTS[i].en); });
+    labelViews();
+    // 語言切換
+    document.querySelectorAll<HTMLButtonElement>('.lang-btn').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang as Lang)));
+    onLang(() => { labelViews(); this.sync(); });
+    applyLang();
     $('mode-orbit').addEventListener('click', () => rig.setMode('orbit'));
     $('mode-fly').addEventListener('click', () => rig.setMode('fly'));
     rig.onModeChange = () => this.sync();
@@ -70,11 +77,11 @@ export class Panel {
     $<HTMLInputElement>('time').value = String(env.hours);
     $('clock-label').textContent = fmt(env.hours);
     const t = env.sunTimes();
-    $('sunrise').textContent = `日出 ${fmt(t.sunrise)}`;
-    $('sunset').textContent = `日落 ${fmt(t.sunset)}`;
+    $('sunrise').textContent = `${tr('日出', 'Sunrise')} ${fmt(t.sunrise)}`;
+    $('sunset').textContent = `${tr('日落', 'Sunset')} ${fmt(t.sunset)}`;
     $<HTMLInputElement>('date').value = `${env.year}-${String(env.month + 1).padStart(2, '0')}-${String(env.day).padStart(2, '0')}`;
     $('flow').classList.toggle('on', !!env.timeFlow);
-    $('flow').textContent = env.timeFlow ? '❚❚ 暫停' : '▶ 流動';
+    $('flow').textContent = env.timeFlow ? tr('❚❚ 暫停', '❚❚ Pause') : tr('▶ 流動', '▶ Run');
     document.querySelectorAll<HTMLButtonElement>('#seasons .chip').forEach((b) => b.classList.toggle('on', b.dataset.s === env.season));
     document.querySelectorAll<HTMLButtonElement>('#weathers .chip').forEach((b) => b.classList.toggle('on', b.dataset.w === env.weather));
     $('mode-orbit').classList.toggle('on', this.rig.mode === 'orbit');

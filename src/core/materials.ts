@@ -277,24 +277,34 @@ float enhPiazza = 0.0;
 #endif
 #ifdef ENH_DOME
   {
-    // 穹頂內部：16 條鍍金肋、6 層藍金相間的馬賽克分格與圓章
+    // 穹頂內部（依實拍）：16 條鍍金肋；各瓣由下而上分成逐層變矮的方格，
+    // 下層暖金色畫格、中層圓章、上層藍底；頂端燈籠亭口外圍深色環
     vec2 d = vWPos.xz - uDome.xy;
     float ang = atan(d.y, d.x) / 6.2831853 * 16.0;
     float t = clamp((vWPos.y - uDome.z) / (uDome.w - uDome.z), 0.0, 1.0);
-    float tier = t * 6.0;
+    // 非等距分層（越往上越矮）
+    float tier = t < 0.24 ? t / 0.24 : t < 0.43 ? 1.0 + (t - 0.24) / 0.19 : t < 0.59 ? 2.0 + (t - 0.43) / 0.16 : t < 0.72 ? 3.0 + (t - 0.59) / 0.13 : t < 0.83 ? 4.0 + (t - 0.72) / 0.11 : t < 0.92 ? 5.0 + (t - 0.83) / 0.09 : 6.0 + (t - 0.92) / 0.08;
     float fa = abs(fract(ang) - 0.5);
     float ft = abs(fract(tier) - 0.5);
-    float rib = 1.0 - smoothstep(0.035, 0.05, 0.5 - fa);
-    rib = 1.0 - step(0.06, 0.5 - fa);
-    float tierLine = 1.0 - step(0.05, 0.5 - ft);
-    float medal = 1.0 - smoothstep(0.16, 0.19, length(vec2(fa - 0.0, (ft) * 0.9)));
-    vec3 blue = vec3(0.12, 0.2, 0.42), gold = vec3(0.95, 0.74, 0.36);
-    float even = mod(floor(tier), 2.0);
-    vec3 panel = mix(blue, gold * 0.85, even * 0.35);
-    vec3 col = mix(panel, gold, max(rib, tierLine));
-    col = mix(col, mix(gold, blue * 1.3, even), medal * (1.0 - max(rib, tierLine)));
+    float level = floor(tier);
+    float rib = 1.0 - step(0.055, 0.5 - fa);
+    float tierLine = 1.0 - step(0.06, 0.5 - ft);
+    float frame = max(1.0 - step(0.1, 0.5 - fa), 1.0 - step(0.11, 0.5 - ft)) * (1.0 - max(rib, tierLine));
+    vec3 gold = vec3(0.95, 0.76, 0.38), ochre = vec3(0.62, 0.45, 0.24), blue = vec3(0.12, 0.2, 0.42), deep = vec3(0.05, 0.07, 0.14);
+    // 畫格底色：下層暖金、中層金藍交錯、上層藍
+    vec3 panel = level < 2.0 ? ochre : level < 4.0 ? mix(ochre, blue, step(0.5, fract(level * 0.5))) : blue;
+    // 畫格內的明暗變化（不畫人物，只表現馬賽克的色塊）
+    float mottled = enh_noise(vec2(ang * 9.0, tier * 7.0)) * 0.35 + enh_noise(vec2(ang * 31.0, tier * 23.0)) * 0.15;
+    panel *= 0.8 + mottled;
+    // 中層圓章
+    float medal = (level >= 2.0 && level < 4.0) ? 1.0 - smoothstep(0.24, 0.28, length(vec2(fa, ft * 0.85))) : 0.0;
+    vec3 col = mix(panel, gold * 0.95, medal * 0.6);
+    col = mix(col, gold * 0.8, frame);
+    col = mix(col, gold, max(rib, tierLine));
+    // 燈籠亭口外圍深色環
+    col = mix(col, deep, smoothstep(0.955, 0.97, t) * (1.0 - rib));
     diffuseColor.rgb = col * (0.85 + 0.25 * dot(diffuseColor.rgb, vec3(0.33)));
-    enhMetal = max(rib, tierLine) * 0.8;
+    enhMetal = max(max(rib, tierLine), frame * 0.6) * 0.8;
     enhRoughMul *= 0.5;
   }
 #endif

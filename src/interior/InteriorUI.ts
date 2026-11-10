@@ -4,6 +4,16 @@ import type { TourController } from './TourController';
 import { IN } from './Interior';
 import { ScanViewer } from './ScanViewer';
 import { ART } from './credits';
+import { EXHIBITS_EN, ZONES_EN } from './exhibitsEn';
+import { t, getLang, onLang, applyLang } from '../i18n';
+import type { Exhibit, Zone } from './exhibitsData';
+
+/** 依目前語言取展品標題、副標、解說 */
+const tx = (e: Exhibit) => (getLang() === 'en' && EXHIBITS_EN[e.id]) ? EXHIBITS_EN[e.id] : e;
+const zoneName = (id: Zone) => t(ZONES.find((z) => z.id === id)!.name, ZONES_EN[id]);
+const LIC_EN: Record<string, string> = { '公有領域': 'Public domain', '無已知著作權限制': 'No known copyright restrictions' };
+const NOIMG_EN: Record<string, string> = {"navicella": "Giotto's Navicella", "tabitha": "the Tabitha altarpiece", "cripple": "the altarpiece of the healing of the cripple", "column": "the image of Our Lady of the Column", "navaltar": "the Navicella altarpiece", "sacrament": "the Holy Trinity", "stransaltars": "the St Thomas altarpiece", "ntransaltars": "the St Wenceslas altarpiece"};
+const authorEn = (a: string) => a.replace('（原畫）', ' (painter)').replace('（原畫草稿）', ' (sketch)').replace('（攝影）', ' (photo)');
 
 const FEATURED = EXHIBITS.map((e, i) => (e.featured ? i : -1)).filter((i) => i >= 0);
 const ALL = EXHIBITS.map((_, i) => i);
@@ -31,27 +41,27 @@ export class InteriorUI {
     this.root.className = 'hidden';
     this.root.innerHTML = `
       <div class="int-top">
-        <div class="int-brand"><div class="t1">聖彼得大教堂</div><div class="t2">Interno della Basilica · 線上導覽</div></div>
-        <div class="int-actions"><button class="int-exit int-menu" id="int-menu">目錄</button><button class="int-exit" id="int-exit">返回廣場</button></div>
+        <div class="int-brand"><div class="t1"><span class="zh">聖彼得大教堂</span><span class="en">St. Peter's Basilica</span></div><div class="t2">Interno della Basilica · <span class="zh">線上導覽</span><span class="en">Virtual tour</span></div></div>
+        <div class="int-actions"><button class="int-exit int-lang" id="int-lang">EN</button><button class="int-exit int-menu" id="int-menu"><span class="zh">目錄</span><span class="en">Exhibits</span></button><button class="int-exit" id="int-exit"><span class="zh">返回廣場</span><span class="en">Back to the square</span></button></div>
       </div>
       <aside class="int-list">
-        <div class="int-h">展品目錄 <span class="int-count">${EXHIBITS.length} 件</span></div>
+        <div class="int-h"><span class="zh">展品目錄</span><span class="en">Exhibits</span> <span class="int-count">${EXHIBITS.length}</span></div>
         <div class="int-tours"><button class="int-tour" id="int-feat">▶ 精選 ${FEATURED.length} 件</button><button class="int-tour" id="int-all">▶ 完整路線</button></div>
         <div class="int-scroll" id="int-items"></div>
       </aside>
       <div class="int-map" id="int-map"></div>
       <div class="int-card hidden" id="int-card">
-        <button class="int-fold" id="int-fold" aria-label="收合解說">⌄</button>
+        <button class="int-fold" id="int-fold" data-aria-zh="收合解說" data-aria-en="Fold the card">⌄</button>
         <div class="int-num" id="int-num"></div>
         <h2 id="int-title"></h2>
         <div class="int-sub" id="int-sub"></div>
         <p id="int-text"></p>
-        <button class="int-scan hidden" id="int-scan">◎ 真實 3D 掃描</button>
+        <button class="int-scan hidden" id="int-scan">◎ <span class="zh">真實 3D 掃描</span><span class="en">Real 3D scan</span></button>
         <div class="int-src" id="int-src"></div>
-        <div class="int-nav"><button id="int-prev">‹ 上一件</button><button id="int-next">下一件 ›</button></div>
+        <div class="int-nav"><button id="int-prev">‹ <span class="zh">上一件</span><span class="en">Previous</span></button><button id="int-share" class="int-share">⇪ <span class="zh">分享</span><span class="en">Share</span></button><button id="int-next"><span class="zh">下一件</span><span class="en">Next</span> ›</button></div>
       </div>
       <div class="int-tip" id="int-tip"></div>
-      <div class="int-hint">拖曳環視 · 點擊地面光圈、<i>i</i> 或平面圖上的點前往展品 · 滾輪縮放 · ← → 切換展品</div>`;
+      <div class="int-hint"><span class="zh">拖曳環視 · 點擊地面光圈、<i>i</i> 或平面圖上的點前往展品 · 滾輪縮放 · ← → 切換展品</span><span class="en">Drag to look around · click a floor ring, an <i>i</i> or a dot on the plan to go to an exhibit · wheel to zoom · ← → to switch exhibits</span></div>`;
     document.body.appendChild(this.root);
     this.card = this.root.querySelector('#int-card')!;
     this.list = this.root.querySelector('#int-items')!;
@@ -65,12 +75,12 @@ export class InteriorUI {
       if (!items.length) continue;
       const sec = document.createElement('details');
       sec.open = true;
-      sec.innerHTML = `<summary>${z.name}<span>${items.length}</span></summary>`;
+      sec.innerHTML = `<summary><b data-zone="${z.id}"></b><span>${items.length}</span></summary>`;
       const ol = document.createElement('ol');
       for (const { e, i } of items) {
         const li = document.createElement('li');
         li.dataset.i = String(i);
-        li.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${e.title.replace(/ [A-Z].*$/, '')}</span>${e.featured ? '<span class="star">★</span>' : ''}`;
+        li.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t"></span>${e.featured ? '<span class="star">★</span>' : ''}`;
         li.addEventListener('click', () => { tour.stopAuto(); this.syncTour(); this.closeDrawer(); tour.goTo(i); });
         ol.appendChild(li);
       }
@@ -78,6 +88,22 @@ export class InteriorUI {
       this.list.appendChild(sec);
     }
     this.me = this.buildMap();
+    this.relabel();
+    applyLang();
+    onLang(() => { this.relabel(); if (this.current >= 0 && !this.card.classList.contains('hidden')) this.show(this.current, true); this.syncTour(); });
+    this.root.querySelector('#int-lang')!.addEventListener('click', () => import('../i18n').then(({ setLang }) => setLang(getLang() === 'en' ? 'zh' : 'en')));
+    // 分享：手機用系統分享，桌面複製連結
+    this.root.querySelector('#int-share')!.addEventListener('click', async () => {
+      const e = EXHIBITS[this.current];
+      if (!e) return;
+      const url = `${location.origin}${location.pathname}#${e.id}`;
+      const title = tx(e).title;
+      try {
+        if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({ title, url }); return; }
+        await navigator.clipboard.writeText(url);
+        this.flash(t('已複製連結', 'Link copied'));
+      } catch { this.flash(url); }
+    });
 
     this.root.querySelector('#int-exit')!.addEventListener('click', () => this.onExit?.());
     // 手機：目錄抽屜、解說卡收合
@@ -101,7 +127,7 @@ export class InteriorUI {
     tour.onSelect = (i) => this.show(i);
     tour.onHover = (i) => {
       if (i === null) { this.tip.classList.remove('on'); return; }
-      this.tip.textContent = EXHIBITS[i].title;
+      this.tip.textContent = tx(EXHIBITS[i]).title;
       this.tip.classList.add('on');
     };
   }
@@ -154,22 +180,39 @@ export class InteriorUI {
 
   syncTour() {
     const on = this.tour.autoTour, featured = on && this.tour.route.length === FEATURED.length;
-    this.btnFeat.textContent = on && featured ? '❚❚ 暫停' : `▶ 精選 ${FEATURED.length} 件`;
-    this.btnAll.textContent = on && !featured ? '❚❚ 暫停' : '▶ 完整路線';
+    this.btnFeat.textContent = on && featured ? t('❚❚ 暫停', '❚❚ Pause') : t(`▶ 精選 ${FEATURED.length} 件`, `▶ Highlights (${FEATURED.length})`);
+    this.btnAll.textContent = on && !featured ? t('❚❚ 暫停', '❚❚ Pause') : t('▶ 完整路線', '▶ Full route');
   }
 
-  show(i: number) {
+  /** 依語言更新目錄、分區與按鈕文字 */
+  private relabel() {
+    this.list.querySelectorAll<HTMLElement>('[data-zone]').forEach((b) => { b.textContent = zoneName(b.dataset.zone as Zone); });
+    this.list.querySelectorAll<HTMLElement>('li').forEach((li) => { (li.querySelector('.t') as HTMLElement).textContent = tx(EXHIBITS[Number(li.dataset.i)]).title.replace(/ [A-Z][a-z].*$/, (m) => (getLang() === 'en' ? m : '')); });
+    this.dots.forEach((d, k) => { (d.querySelector('title') as Element).textContent = tx(EXHIBITS[k]).title; });
+    (this.root.querySelector('#int-lang') as HTMLElement).textContent = getLang() === 'en' ? '中文' : 'EN';
+  }
+
+  private flash(msg: string) {
+    this.tip.textContent = msg;
+    this.tip.classList.add('on');
+    setTimeout(() => this.tip.classList.remove('on'), 1800);
+  }
+
+  show(i: number, keepAnim = false) {
     const e = EXHIBITS[i];
     this.current = i;
+    const L = tx(e);
+    // 網址同步為 #展品，方便分享
+    try { history.replaceState(null, '', `#${e.id}`); } catch { /* 忽略 */ }
     const scanBtn = this.card.querySelector('#int-scan') as HTMLElement;
     scanBtn.classList.add('hidden');
     if (e.scan) ScanViewer.available(e.scan.url).then((ok) => { if (ok && this.current === i) scanBtn.classList.remove('hidden'); });
-    (this.card.querySelector('#int-num') as HTMLElement).textContent = `${String(i + 1).padStart(2, '0')} / ${String(EXHIBITS.length).padStart(2, '0')} · ${ZONES.find((z) => z.id === e.zone)!.name}`;
-    (this.card.querySelector('#int-title') as HTMLElement).textContent = e.title;
-    (this.card.querySelector('#int-sub') as HTMLElement).textContent = e.subtitle;
-    (this.card.querySelector('#int-text') as HTMLElement).textContent = e.text;
+    (this.card.querySelector('#int-num') as HTMLElement).textContent = `${String(i + 1).padStart(2, '0')} / ${String(EXHIBITS.length).padStart(2, '0')} · ${zoneName(e.zone)}`;
+    (this.card.querySelector('#int-title') as HTMLElement).textContent = L.title;
+    (this.card.querySelector('#int-sub') as HTMLElement).textContent = L.subtitle;
+    (this.card.querySelector('#int-text') as HTMLElement).textContent = L.text;
     const src = this.card.querySelector('#int-src') as HTMLElement;
-    src.innerHTML = '資料來源：';
+    src.innerHTML = t('資料來源：', 'Sources: ');
     e.sources.forEach((u, k) => {
       const a = document.createElement('a');
       a.href = u; a.target = '_blank'; a.rel = 'noopener';
@@ -181,14 +224,22 @@ export class InteriorUI {
       const c = ART[k];
       const line = document.createElement('div');
       line.className = 'int-art';
-      line.append(c.kind === 'original' ? '影像（教堂內為馬賽克複製，此處顯示原畫）：' : '影像：');
-      const a = document.createElement('a'); a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = `${c.author} · ${c.license}`;
+      line.append(c.kind === 'original' ? t('影像（教堂內為馬賽克複製，此處顯示原畫）：', 'Image (the basilica has a mosaic copy; this shows the original painting): ') : t('影像：', 'Image: '));
+      const a = document.createElement('a'); a.href = c.url; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = getLang() === 'en' ? `${authorEn(c.author)} · ${LIC_EN[c.license] ?? c.license}` : `${c.author} · ${c.license}`;
       line.appendChild(a);
-      if (c.note) line.append(`（${c.note}）`);
+      const note = getLang() === 'en' ? c.noteEn : c.note;
+      if (note) line.append(getLang() === 'en' ? ` (${note})` : `（${note}）`);
+      src.appendChild(line);
+    }
+    if (e.noImage) {
+      const line = document.createElement('div');
+      line.className = 'int-art';
+      line.textContent = t(`${e.noImage}：暫無教堂內實拍或可公開使用的影像，畫板以深色表示。`, `No photo from inside the basilica or openly licensed image of ${NOIMG_EN[e.id] ?? 'this work'} was found, so it is shown as a dark panel.`);
       src.appendChild(line);
     }
     this.card.classList.remove('hidden', 'min');
-    this.card.classList.remove('in'); void this.card.offsetWidth; this.card.classList.add('in');
+    if (!keepAnim) { this.card.classList.remove('in'); void this.card.offsetWidth; this.card.classList.add('in'); }
     this.list.querySelectorAll('li').forEach((li) => {
       const on = Number((li as HTMLElement).dataset.i) === i;
       li.classList.toggle('on', on);
@@ -200,6 +251,9 @@ export class InteriorUI {
 
   setVisible(v: boolean) {
     this.root.classList.toggle('hidden', !v);
-    if (!v) { this.card.classList.add('hidden'); this.list.querySelectorAll('li').forEach((li) => li.classList.remove('on')); }
+    if (!v) {
+      this.card.classList.add('hidden'); this.list.querySelectorAll('li').forEach((li) => li.classList.remove('on'));
+      try { history.replaceState(null, '', location.pathname + location.search); } catch { /* 忽略 */ }
+    }
   }
 }
