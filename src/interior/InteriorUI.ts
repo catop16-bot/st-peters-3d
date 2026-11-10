@@ -3,6 +3,7 @@ import { EXHIBITS, ZONES } from './exhibitsData';
 import type { TourController } from './TourController';
 import { IN } from './Interior';
 import { ScanViewer } from './ScanViewer';
+import { ART } from './credits';
 
 const FEATURED = EXHIBITS.map((e, i) => (e.featured ? i : -1)).filter((i) => i >= 0);
 const ALL = EXHIBITS.map((_, i) => i);
@@ -175,6 +176,17 @@ export class InteriorUI {
       a.textContent = u.includes('wikipedia') ? 'Wikipedia' : `St. Peter's Basilica.info${e.sources.length > 1 ? ` ${k + 1}` : ''}`;
       src.appendChild(a);
     });
+    // 影像出處：攝影者 · 授權；原畫影像另加說明
+    for (const k of e.art ?? []) {
+      const c = ART[k];
+      const line = document.createElement('div');
+      line.className = 'int-art';
+      line.append(c.kind === 'original' ? '影像（教堂內為馬賽克複製，此處顯示原畫）：' : '影像：');
+      const a = document.createElement('a'); a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = `${c.author} · ${c.license}`;
+      line.appendChild(a);
+      if (c.note) line.append(`（${c.note}）`);
+      src.appendChild(line);
+    }
     this.card.classList.remove('hidden', 'min');
     this.card.classList.remove('in'); void this.card.offsetWidth; this.card.classList.add('in');
     this.list.querySelectorAll('li').forEach((li) => {

@@ -37,6 +37,12 @@ npm run build      # 輸出靜態網站到 dist/
 - `src/interior/nav.ts`：導覽移動的避障路徑（不穿牆、不穿柱）
 - `src/interior/ScanViewer.ts`：真實 3D 掃描檢視器（Draco 壓縮 glTF）。掃描檔放在 `public/models/`，檔案存在時解說卡才會出現按鈕。只收錄出處與授權（CC0 / CC BY / CC BY-SA）都查證過的掃描。
 
+## 影像與雕像
+
+- `public/art/`：祭壇畫、Algardi 浮雕、菲拉雷特銅門的實拍影像（維基共享資源，已裁切）；出處與授權在 `src/interior/credits.ts`，並顯示於解說卡與「關於」頁
+- `tools/sculpt/build.py`：以 Blender 背景模式產生雕像簡化造型（姿勢骨架 + Skin modifier），輸出 `public/models/sculpt/*.glb`（Draco）。重新產生：
+  `/Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python tools/sculpt/build.py -- public/models/sculpt`
+
 ## 效能與手機
 
 - 教堂內部與宣傳片程式在需要時才動態載入；第三方套件拆成 `vendor` chunk

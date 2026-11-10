@@ -34,6 +34,8 @@ export interface Exhibit {
   modelUrl?: string; // 預留：之後替換為真實 3D 掃描（glTF）
   /** 經查證出處與授權的真實 3D 掃描（僅作補充檢視，不取代場景中的全尺寸造型） */
   scan?: { url: string; title: string; credit: string; license: string; source: string };
+  /** 場景中使用的真實影像（credits.ts 的鍵） */
+  art?: string[];
 }
 
 const SP = 'https://www.stpetersbasilica.info';
@@ -62,21 +64,22 @@ export const EXHIBITS: Exhibit[] = [
   {
     id: 'filarete', zone: 'portico', title: '菲拉雷特銅門（中央大門）', subtitle: 'Antonio Averlino「菲拉雷特」 · 1445 年完成（一說 1455 年） · 青銅',
     text: '五扇大門中最古老的一扇，是教宗恩仁四世為舊聖彼得大教堂訂製的作品，新教堂落成後沿用為中央大門。門扇內側下方有菲拉雷特與助手們的自畫像。',
-    station: [127, 1.7, 3], look: [119, 5, 0], hotspot: [120, 10.5, 4.2], fov: 58, featured: true,
+    station: [128.5, 1.7, 0.6], look: [118, 5, 0], hotspot: [120, 11.4, 3.6], fov: 58, featured: true,
     sources: [`${SP}/Interior/DoorFilarete/DoorFilarete.htm`],
+    art: ['filarete'],
   },
   // ── 入口與中殿 ──
+  {
+    id: 'holydoor', zone: 'portico', title: '聖門 Porta Santa', subtitle: 'Vico Consorti · 1949 年（一說 1950 年） · 青銅',
+    text: '在柱廊上，五扇大門最北側的一扇，平時封閉，只在禧年開啟。Consorti 的青銅門扇分為四層共 16 格浮雕，1949 年 12 月 24 日起取代 1749 年的舊木門。最近一次是 2025 年禧年：2024 年 12 月 24 日開啟，2026 年 1 月 6 日關閉。',
+    station: [127, 1.7, -20.5], look: [119, 4.2, -25], hotspot: [120, 9.6, -22.6], fov: 55, featured: true,
+    sources: [`${SP}/Interior/HolyDoor/HolyDoor.htm`, `${WK}Holy_door`],
+  },
   {
     id: 'rota', zone: 'nave', title: '斑岩圓盤 Rota Porfiretica', subtitle: '紅斑岩 · 取自舊聖彼得大教堂',
     text: '中央大門內的深紅色斑岩圓盤，從舊大教堂移來。依傳統，西元 800 年聖誕，查理曼就是跪在這塊圓盤上由教宗良三世加冕為皇帝。',
     station: [106.5, 1.7, 4.5], look: [111.5, 0, 0], hotspot: [111.5, 1.2, 0], fov: 60, featured: true,
     sources: [`${SP}/Interior/Nave/Nave.htm`],
-  },
-  {
-    id: 'holydoor', zone: 'nave', title: '聖門 Porta Santa', subtitle: 'Vico Consorti · 1949 年（一說 1950 年） · 青銅',
-    text: '五扇大門最北側的一扇，平時封閉，只在禧年開啟。Consorti 的青銅門扇分為四層共 16 格浮雕，1949 年 12 月 24 日起取代 1749 年的舊木門。最近一次是 2025 年禧年：2024 年 12 月 24 日開啟，2026 年 1 月 6 日關閉。',
-    station: [109, 1.7, -19.5], look: [117, 4.5, -25], hotspot: [116, 9, -25], fov: 55, featured: true,
-    sources: [`${SP}/Interior/HolyDoor/HolyDoor.htm`, `${WK}Holy_door`],
   },
   {
     id: 'nave', zone: 'nave', title: '中殿', subtitle: '卡洛·馬德諾 · 1607 年動工 · 內部長 186.3 m · 拱頂高 45.5 m',
@@ -108,6 +111,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '左側廊第一座禮拜堂。洗禮池是一整塊古代紅斑岩，曾作為皇帝奧托二世石棺的棺蓋；上方的鍍金青銅池蓋依 Fontana 的設計製作。祭壇畫是依 Carlo Maratta 原作製成的馬賽克《基督受洗》。',
     station: [110, 1.7, 20], look: [110, 2.6, 31], hotspot: [107.6, 4.4, 29], fov: 58,
     sources: [`${SP}/Altars/Baptistery/Baptistery.htm`],
+    art: ['baptism'],
   },
   {
     id: 'stuarts', zone: 'saisle', title: '斯圖亞特王族紀念碑', subtitle: '安東尼奧·卡諾瓦 · 大理石',
@@ -126,12 +130,14 @@ export const EXHIBITS: Exhibit[] = [
     text: '位於聖安德烈巨柱外側，左側廊的盡頭。《主顯聖容》是拉斐爾的最後一幅畫，他在 1520 年去世時尚未完成，由學生補完，原作今藏梵蒂岡美術館。這裡是 18 世紀依原作製成的馬賽克；大教堂各祭台的「畫」大多是這類馬賽克複製品。',
     station: [44, 1.7, 25], look: [33, 5.5, 25], hotspot: [34, 9.5, 28], fov: 55,
     sources: [`${SP}/Altars/Transfiguration/Transfiguration.htm`],
+    art: ['transfiguration'],
   },
   {
     id: 'clementine', zone: 'saisle', title: '克勉禮拜堂與聖額我略一世祭台', subtitle: '為 1600 年禧年建造 · 穹頂馬賽克 Roncalli 設計（1603）',
     text: '大教堂四座轉角禮拜堂之一，由教宗克勉八世為 1600 年禧年完成。祭台下的白色大理石石棺安放教宗聖額我略一世（大額我略）的遺骸，1606 年遷入。祭壇畫是依 Andrea Sacchi 原作製成的馬賽克《聖額我略的奇蹟》。禮拜堂內另有丹麥雕塑家 Thorvaldsen 的庇護七世紀念碑（1831）。',
     station: [40, 1.7, 21], look: [40, 9, 33], hotspot: [42.5, 11, 31.5], fov: 66,
     sources: [`${SP}/Altars/Clementine/Clementine.htm`, `${SP}/Altars/GregoryGreat/GregoryGreat.htm`],
+    art: ['gregory'],
   },
   // ── 穹頂與交叉部 ──
   {
@@ -176,6 +182,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '中央是聖若瑟祭台：Achille Funi 1961 年的原畫於 1963 年製成馬賽克，同年 3 月 19 日由若望二十三世祝福；祭台下的古代石棺安放聖西滿與聖猶達·達陡的聖髑。右側是聖多默祭台，馬賽克依 Vincenzo Camuccini 的原畫描繪「多默的疑惑」，祭台下有教宗聖鮑尼法斯四世的聖髑。左側是聖伯多祿倒釘十字架祭台，馬賽克依 Guido Reni 的原畫製作，原畫今藏梵蒂岡美術館。',
     station: [0, 1.7, 45], look: [0, 6, 68], hotspot: [2.5, 11.5, 66.5], fov: 62,
     sources: [`${SP}/Altars/StJoseph/StJoseph.htm`, `${SP}/Altars/StThomas/StThomas.htm`, `${SP}/Altars/CrucifixionStPeter/CrucifixionStPeter.htm`],
+    art: ['joseph', 'crucifixion'],
   },
   {
     id: 'alexander', zone: 'stransept', title: '亞歷山大七世紀念碑', subtitle: '貝尼尼 · 1671–1678 · 大理石、西西里碧玉、鍍金青銅',
@@ -189,6 +196,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '位於聖維羅妮卡巨柱南側。描繪耶穌聖心向聖瑪加利大·亞拉高顯現。原畫由 Carlo Muccioli 於 1919–20 年繪製，1920–25 年製成馬賽克，取代了此處原本 Francesco Vanni 的《術士西滿墮落》；1923 年重新祝聖。',
     station: [-37.5, 1.7, 43], look: [-37.5, 5, 33], hotspot: [-35, 9.5, 34], fov: 58,
     sources: [`${SP}/Altars/SacredHeart/SacredHeart.htm`],
+    art: ['sacredheart'],
   },
   {
     id: 'cripple', zone: 'swchapel', title: '聖伯多祿治癒癱子祭台', subtitle: 'Francesco Mancini 原畫（1748） · 1751–1758 年製成馬賽克',
@@ -207,6 +215,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '位於圓柱聖母禮拜堂右側，兩旁是黑色花崗岩柱。祭壇是一整面大理石高浮雕，刻畫教宗良一世與匈人王阿提拉會面、勸退其進攻羅馬。這是大教堂中唯一以大型大理石浮雕作為祭壇畫的祭台。',
     station: [-45, 1.7, 48], look: [-54, 5, 44.5], hotspot: [-53, 9, 47], fov: 55,
     sources: [`${SP}/Altars/LeotheGreat/LeotheGreat.htm`],
+    art: ['leo'],
   },
   {
     id: 'alexander8', zone: 'swchapel', title: '亞歷山大八世紀念碑', subtitle: '1725 年 · 教宗青銅像：Giuseppe Bertosi',
@@ -251,12 +260,14 @@ export const EXHIBITS: Exhibit[] = [
     text: '位於聖彌額爾與聖佩特羅尼拉禮拜堂的後方。祭壇畫依 Guercino 的作品製成馬賽克，原畫今藏卡比托利歐美術館。祭台下安放聖佩特羅尼拉的聖髑。在羅馬的法國信眾每年 5 月 31 日在此聚會。',
     station: [-44, 1.7, -47], look: [-54, 5, -44.5], hotspot: [-53, 9, -47], fov: 58,
     sources: [`${SP}/Altars/StPetronilla/StPetronilla.htm`],
+    art: ['petronilla'],
   },
   {
     id: 'michael', zone: 'nwchapel', title: '聖彌額爾總領天使祭台', subtitle: '依 Guido Reni 原作 · 1757–1758 年馬賽克',
     text: '祭壇畫依 Guido Reni 為羅馬嘉布遣會聖母堂所繪的《聖彌額爾》製成馬賽克。此處 1628 年設置的前一幅馬賽克，是新聖彼得大教堂中第一幅馬賽克祭壇畫，今存於馬切拉塔主教座堂。',
     station: [-40, 1.7, -48], look: [-43.5, 5, -56], hotspot: [-41, 9.5, -55], fov: 58,
     sources: [`${SP}/Altars/StMichaelArchangel/StMichaelArchangel.htm`],
+    art: ['michael'],
   },
   {
     id: 'tabitha', zone: 'nwchapel', title: '聖伯多祿使塔比莎復活祭台', subtitle: 'Placido Costanzi 原畫 · 1758–1760 年製成馬賽克',
@@ -282,6 +293,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '中央是聖普羅策素與瑪爾定祭台，馬賽克依 Valentin de Boulogne 的原畫製作（原畫今藏梵蒂岡美術館），祭台下的斑岩甕安放兩位聖人的聖髑。左側是聖伊拉斯謨祭台，馬賽克依普桑（Nicolas Poussin）1628–29 年的原畫製作，原畫同樣藏於梵蒂岡美術館。右側是聖文策老祭台，馬賽克依 Angelo Caroselli 的原畫製作，兩旁另有聖濟利祿與聖默道的馬賽克。',
     station: [0, 1.7, -45], look: [0, 6, -68], hotspot: [-2.5, 11.5, -66.5], fov: 62,
     sources: [`${SP}/Altars/StsProcessus&Martinian/StsProcessus&Martinian.htm`, `${SP}/Altars/StErasmus/StErasmus.htm`, `${SP}/Altars/StWenceslas/StWenceslas.htm`],
+    art: ['processus', 'erasmus'],
   },
   // ── 中殿右側與右側廊（回程） ──
   {
@@ -295,12 +307,14 @@ export const EXHIBITS: Exhibit[] = [
     text: '位於聖朗基努斯巨柱背面，緊鄰聖彼得青銅像，是右側廊的盡頭。祭台下安放教宗聖若望二十三世的遺體，2001 年遷入。祭壇畫是 Domenichino《聖熱羅尼莫最後的聖餐》（1614）的馬賽克複製，原作今藏梵蒂岡美術館。',
     station: [44, 1.7, -25], look: [33, 4.5, -25], hotspot: [34, 9.5, -28], fov: 55,
     sources: [`${SP}/Altars/StJerome/StJerome.htm`],
+    art: ['jerome'],
   },
   {
     id: 'gregorian', zone: 'naisle', title: '額我略禮拜堂與援助聖母祭台', subtitle: '米開朗基羅始建 · 德拉·波爾塔完成',
     text: '大教堂四座轉角禮拜堂之一，以教宗額我略十三世命名，小穹頂高約 42 m。祭台上的《援助聖母》是 12 世紀的木板聖像，1578 年由額我略十三世從舊大教堂遷來；祭台下的斑岩甕中安放納齊安的聖額我略的遺骸。',
     station: [40, 1.7, -21], look: [40, 9, -33], hotspot: [42.5, 11, -31.5], fov: 66,
     sources: [`${SP}/Altars/GregorianChapel/GregorianChapel.htm`, `${SP}/Altars/OurLadyofSuccour/OurLadyofSuccour.htm`],
+    art: ['succour'],
   },
   {
     id: 'sacrament', zone: 'naisle', title: '聖體禮拜堂', subtitle: '聖體龕：貝尼尼，1674 年 · 鐵門：博羅米尼',
@@ -319,6 +333,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '祭台下安放教宗聖若望保祿二世之墓：他在 2011 年 5 月 1 日宣福後遷葬於此，2014 年 4 月 27 日封聖。祭壇畫是 Domenichino《聖塞巴斯蒂安殉道》的馬賽克複製。禮拜堂兩側為庇護十一世像（Francesco Nagni，1949）與庇護十二世像（Francesco Messina，1964）。',
     station: [96, 1.7, -22], look: [96, 4.5, -33], hotspot: [98.5, 9.5, -32], fov: 58, featured: true,
     sources: [`${SP}/Altars/StSebastian/StSebastian.htm`],
+    art: ['sebastian'],
   },
   {
     id: 'christina', zone: 'naisle', title: '瑞典女王克莉絲蒂娜紀念碑', subtitle: 'Carlo Fontana 設計 · 1702 年 · 鍍金青銅、大理石',

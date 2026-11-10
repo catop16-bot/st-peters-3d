@@ -19,7 +19,7 @@ const boxes: Box[] = (() => {
     both(Math.max(P, cx - (IN.bayW / 2 - IN.arcHW)), Math.min(IN.naveEnd, cx + (IN.bayW / 2 - IN.arcHW)), W - 1.2, IN.aisleInner + 2.2);
   }
   // 入口牆（中央大門開口 |z| < 2.4）
-  both(IN.naveEnd - 0.4, IN.naveEnd + IN.wallT + 0.4, 2.4, IN.vestibule + 4);
+  both(IN.naveEnd - 2.6, IN.naveEnd + IN.wallT + 0.4, 1.6, IN.vestibule + 4); // 含向內敞開的菲拉雷特門扇
   // 教宗祭台、華蓋與告解堂
   out.push([-7.5, 14.5, -7.5, 7.5]);
   // 兩耳堂東側牆外

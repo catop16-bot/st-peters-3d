@@ -5,6 +5,7 @@ import type { InteriorBuild } from './Interior';
 import { IN, CH } from './Interior';
 
 import { EXHIBITS } from './exhibitsData';
+import { ART } from './credits';
 export { EXHIBITS, ZONES, type Exhibit, type Zone } from './exhibitsData';
 
 /** 為一尊站立的簡化雕像生成網格（朝向 faceDir） */
@@ -103,6 +104,7 @@ export interface ExhibitBuild {
 
 export function buildExhibits(build: InteriorBuild): ExhibitBuild {
   const { scene, mats } = build;
+  SCN = scene;
   const b = new GeoBucket();
   // 室內青銅（深色、局部鍍金），華蓋與聖彼得像使用
   const bronze = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.12, 0.085, 0.055), roughness: 0.42, metalness: 0.75 });
@@ -112,12 +114,7 @@ export function buildExhibits(build: InteriorBuild): ExhibitBuild {
   b.add(porphyry, new THREE.CircleGeometry(1.3, 48).rotateX(-Math.PI / 2).translate(111.5, 0.015, 0));
   b.add(mats.marbleWhite, new THREE.RingGeometry(1.3, 1.5, 48).rotateX(-Math.PI / 2).translate(111.5, 0.014, 0));
 
-  // 2. 聖門：16 格浮雕青銅門與鍍金十字
-  for (let r = 0; r < 8; r++) for (let c = 0; c < 2; c++) {
-    b.add(mats.bronze, boxAt(0.25, 0.4 + r * 0.95, 1.2 + r * 0.95, 1.8, IN.naveEnd - 0.2, -25 + (c - 0.5) * 2.05));
-  }
-  b.add(mats.gilded, boxAt(0.3, 8.6, 10.6, 0.25, IN.naveEnd - 0.3, -25));
-  b.add(mats.gilded, boxAt(0.3, 9.6, 9.85, 1.4, IN.naveEnd - 0.3, -25));
+  // 2. 聖門：16 格鍍金浮雕在柱廊側（見下方柱廊段）；教堂內側只見門的背面
 
   // 3. 聖殤：祭台、聖母坐像與橫躺的基督、玻璃
   const px = 110, pz = -31;
@@ -139,9 +136,8 @@ export function buildExhibits(build: InteriorBuild): ExhibitBuild {
   // 5. 聖彼得青銅像（東北巨柱面向中殿處）
   b.add(mats.marbleDark, boxAt(2.0, 0, 2.2, 1.6, 29.5, -12.6));
   b.add(mats.marble, boxAt(2.2, 2.2, 2.5, 1.8, 29.5, -12.6));
-  b.add(bronze, seated(29.5, 2.5, -12.6, 2.1, 0, 1));
-  b.add(bronze, boxAt(1.3, 2.5, 4.8, 0.25, 29.5, -13.4)); // 寶座椅背
-  b.add(mats.gilded, boxAt(0.08, 3.9, 4.4, 0.08, 29.3, -12.0));
+  // 坐姿、右手祝福、左手持鑰匙（tools/sculpt 產生的簡化造型，含寶座）
+  SCULPTS.push({ file: 'peter', mat: bronze, x: 29.5, y: 2.5, z: -12.6, h: 2.2, fx: 0, fz: 1, fallback: () => seated(29.5, 2.5, -12.6, 2.1, 0, 1) });
 
   // 6. 華蓋、教宗祭台、告解堂
   {
@@ -167,6 +163,34 @@ export function buildExhibits(build: InteriorBuild): ExhibitBuild {
     for (const [w, d, x, z] of [[2 * C + 2, 1.2, 0, C], [2 * C + 2, 1.2, 0, -C], [1.2, 2 * C + 2, C, 0], [1.2, 2 * C + 2, -C, 0]] as [number, number, number, number][]) {
       b.add(bronze, boxAt(w, 22.0, 23.6, d, x, z));
       b.add(mats.gilded, boxAt(w, 21.2, 22.0, d * 0.6, x, z));
+      // 垂飾帷幔：檐部下緣成排的青銅垂片與鍍金流蘇
+      const along = w > d ? 'x' : 'z', L = Math.max(w, d) - 1.2, n = 11;
+      for (let k = 0; k < n; k++) {
+        const t = -L / 2 + (k + 0.5) * (L / n);
+        const tab = new THREE.CircleGeometry(L / n / 2 * 0.95, 12, Math.PI, Math.PI);
+        if (along === 'z') tab.rotateY(Math.PI / 2);
+        const out = along === 'x' ? Math.sign(z) * (d / 2 + 0.02) : Math.sign(x) * (w / 2 + 0.02);
+        if (along === 'x') tab.translate(t, 21.25, z + out); else tab.translate(x + out, 21.25, t);
+        b.add(bronze, tab);
+        const tas = new THREE.SphereGeometry(0.09, 8, 6);
+        if (along === 'x') tas.translate(t, 20.62, z + out); else tas.translate(x + out, 20.62, t);
+        b.add(mats.gilded, tas);
+      }
+    }
+    // 柱座外側的 Barberini 家族盾徽（鍍金盾形與三隻蜜蜂）
+    for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      for (const [nx, nz] of [[sx, 0], [0, sz]]) {
+        const px = sx * C + nx * 1.17, pz = sz * C + nz * 1.17;
+        const sh = new THREE.CylinderGeometry(0.55, 0.42, 0.06, 16);
+        sh.scale(1, 1, 1.35); sh.rotateX(Math.PI / 2); if (nx) sh.rotateY(Math.PI / 2);
+        sh.translate(px, 1.5, pz);
+        b.add(mats.gilded, sh);
+        for (const [u, v] of [[-0.18, 1.7], [0.18, 1.7], [0, 1.35]]) {
+          const bee = new THREE.SphereGeometry(0.07, 8, 6); bee.scale(1, 1.4, 0.6);
+          bee.translate(px + nx * 0.05 + (nz ? u : 0), v, pz + nz * 0.05 + (nx ? u : 0));
+          b.add(bronze, bee);
+        }
+      }
     }
     // 頂端：球與十字（總高約 28.5–29 m）
     b.add(mats.gilded, lathe([[1.1, 26.7], [0.8, 27.1], [0.45, 27.3]], 16));
@@ -209,10 +233,13 @@ export function buildExhibits(build: InteriorBuild): ExhibitBuild {
 
   // 7. 四柱巨像（壁龕內，朝向中心）
   const pierSaints: [number, number, number][] = [[1, -1, 0], [-1, -1, 1], [-1, 1, 2], [1, 1, 3]]; // 東北聖朗基努斯、西北聖海倫娜、西南聖維羅妮卡、東南聖安德烈
+  const sculptName = ['longinus', 'helena', 'veronica', 'andrew'];
   for (const [sx, sz, v] of pierSaints) {
     const x = sx * 17.9, z = sz * 17.9;
     b.add(mats.marble, boxAt(3.4, 0, 3.2, 3.4, x, z));
-    b.add(mats.marbleWhite, figure(v, x, 3.2, z, 5.0, -sx, -sz));
+    // 依各像真實姿勢與持物製作的簡化造型（聖矛、十字架、聖帕、X 形十字架）
+    const n = Math.hypot(sx, sz);
+    SCULPTS.push({ file: sculptName[v], mat: mats.marbleWhite, x, y: 3.2, z, h: 4.8, fx: -sx / n, fz: -sz / n, fallback: () => figure(v, x, 3.2, z, 5.0, -sx, -sz) });
   }
 
   // 8. 聖彼得寶座與光之窗
@@ -231,6 +258,10 @@ export function buildExhibits(build: InteriorBuild): ExhibitBuild {
     b.add(mats.gilded, boxAt(0.7, 11.4, 16.2, 4.0, x0 - 0.2, 0));
     b.add(mats.gilded, lathe([[2.0, 0], [1.6, 0.6], [0.4, 1.4], [0, 1.6]], 16).scale(1, 1, 1).translate(x0 - 0.2, 16.2, 0));
     for (const dz of [-2.2, 2.2]) b.add(mats.gilded, boxAt(0.6, 10.2, 13.4, 0.5, x0 + 1.0, dz));
+    // 寶座上方：兩位小天使捧著教宗三重冕與天國的鑰匙
+    for (const dz of [-1.3, 1.3]) b.add(mats.gilded, figure(dz > 0 ? 1 : 3, x0 + 0.6, 17.0, dz, 1.4, 1, -dz * 0.4));
+    b.add(mats.gilded, lathe([[0.42, 0], [0.4, 0.3], [0.44, 0.34], [0.36, 0.62], [0.4, 0.66], [0.3, 0.92], [0.33, 0.96], [0.12, 1.2], [0.05, 1.32], [0.01, 1.36]], 20, x0 + 0.8, 0).translate(0, 18.2, 0));
+    for (const r of [0.5, -0.5]) { const k = boxAt(0.12, 0, 1.3, 0.12, 0, 0); k.rotateX(r); k.translate(x0 + 0.9, 17.6, 0); b.add(mats.gilded, k); }
     // 光芒與雲（圍繞雪花石膏窗）
     const gx = IN.apseEnd + 0.25, gy = 21.5;
     for (let i = 0; i < 120; i++) {
@@ -272,6 +303,7 @@ export function buildExhibits(build: InteriorBuild): ExhibitBuild {
   buildMore(b, build, bronze, porphyry);
 
   b.build(scene, { cast: false, receive: false });
+  loadSculpts(scene);
 
   // ── 導覽點與資訊熱點 ──
   const pickables: THREE.Object3D[] = [];
@@ -339,12 +371,102 @@ type Mats = InteriorBuild['mats'];
  */
 class Piece {
   items: [THREE.Material, THREE.BufferGeometry][] = [];
+  /** 帶貼圖（需保留 UV）的構件：不進 GeoBucket，直接加入場景 */
+  meshes: [THREE.Material, THREE.BufferGeometry][] = [];
   add(m: THREE.Material, g: THREE.BufferGeometry) { this.items.push([m, g]); return this; }
+  addTextured(m: THREE.Material, g: THREE.BufferGeometry) { this.meshes.push([m, g]); return this; }
+  /** 以 tools/sculpt 的模型代替（本地座標；lf 為本地面向，預設 +x） */
+  sculpts: { file: string; mat: THREE.Material; lx: number; ly: number; lz: number; h: number; lfx: number; lfz: number }[] = [];
+  addSculpt(file: string, mat: THREE.Material, lx: number, ly: number, lz: number, h: number, lfx = 1, lfz = 0) { this.sculpts.push({ file, mat, lx, ly, lz, h, lfx, lfz }); return this; }
   put(b: GeoBucket, x: number, z: number, fx: number, fz: number, y = 0) {
     const a = Math.atan2(-fz, fx);
+    const ca = Math.cos(a), sa = Math.sin(a);
+    for (const sc of this.sculpts) {
+      const wx = x + sc.lx * ca + sc.lz * sa, wz = z - sc.lx * sa + sc.lz * ca;
+      const wfx = sc.lfx * ca + sc.lfz * sa, wfz = -sc.lfx * sa + sc.lfz * ca;
+      SCULPTS.push({ file: sc.file, mat: sc.mat, x: wx, y: y + sc.ly, z: wz, h: sc.h, fx: wfx, fz: wfz, fallback: () => new THREE.BufferGeometry() });
+    }
+    this.sculpts = [];
     for (const [m, g] of this.items) { g.rotateY(a); g.translate(x, y, z); b.add(m, g); }
-    this.items = [];
+    for (const [m, g] of this.meshes) { g.rotateY(a); g.translate(x, y, z); SCN.add(new THREE.Mesh(g, m)); }
+    this.items = []; this.meshes = [];
   }
+}
+
+let SCN: THREE.Scene;
+
+/** 以 Blender 產生的雕像模型（public/models/sculpt/*.glb，Draco）：面向 +Z、高度 1 */
+interface SculptSpec { file: string; mat: THREE.Material; x: number; y: number; z: number; h: number; fx: number; fz: number; fallback: () => THREE.BufferGeometry }
+const SCULPTS: SculptSpec[] = [];
+async function loadSculpts(scene: THREE.Scene) {
+  const list = SCULPTS.splice(0);
+  try {
+    const [{ GLTFLoader }, { DRACOLoader }] = await Promise.all([
+      import('three/examples/jsm/loaders/GLTFLoader.js'),
+      import('three/examples/jsm/loaders/DRACOLoader.js'),
+    ]);
+    const loader = new GLTFLoader().setDRACOLoader(new DRACOLoader());
+    await Promise.all(list.map(async (sp) => {
+      try {
+        const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/sculpt/${sp.file}.glb`);
+        gltf.scene.traverse((o) => {
+          const m = o as THREE.Mesh;
+          if (!m.isMesh) return;
+          const mesh = new THREE.Mesh(m.geometry, sp.mat);
+          mesh.scale.setScalar(sp.h);
+          mesh.rotation.y = Math.atan2(sp.fx, sp.fz);
+          mesh.position.set(sp.x, sp.y, sp.z);
+          scene.add(mesh);
+        });
+      } catch { scene.add(new THREE.Mesh(sp.fallback(), sp.mat)); }
+    }));
+  } catch {
+    for (const sp of list) scene.add(new THREE.Mesh(sp.fallback(), sp.mat));
+  }
+}
+const artLoader = new THREE.TextureLoader();
+const artMats = new Map<string, THREE.MeshStandardMaterial>();
+/** 真實影像（維基共享資源）的畫面材質：載入後才顯示貼圖，之前為深色 */
+function artMat(key: string) {
+  let m = artMats.get(key);
+  if (!m) {
+    const a = ART[key];
+    m = new THREE.MeshStandardMaterial({ color: 0x2a2018, roughness: 0.55, metalness: 0.0 });
+    artLoader.load(import.meta.env.BASE_URL + a.file, (t) => {
+      t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+      m!.map = t; m!.color.set(0xffffff); m!.needsUpdate = true;
+    });
+    artMats.set(key, m);
+  }
+  return m;
+}
+/** 菲拉雷特銅門的實拍（黑白）：以青銅色調乘色 */
+function filareteMat(side: 'l' | 'r') {
+  const key = 'filarete-' + side;
+  let m = artMats.get(key);
+  if (!m) {
+    m = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.55, 0.42, 0.28), roughness: 0.45, metalness: 0.6 });
+    artLoader.load(import.meta.env.BASE_URL + `art/filarete-${side}.jpg`, (t) => { t.colorSpace = THREE.SRGBColorSpace; m!.map = t; m!.color.setRGB(1.25, 0.95, 0.62); m!.needsUpdate = true; });
+    artMats.set(key, m);
+  }
+  return m;
+}
+
+/** 面向 +x 的畫面（可為拱頂形），UV 依外框正規化，寬 pw、高 ph、底邊 y0 */
+function artPanel(pw: number, ph: number, y0: number, lx: number, arch: boolean) {
+  let g: THREE.BufferGeometry;
+  if (arch) {
+    g = new THREE.ShapeGeometry(archShape(pw / 2, ph), 24);
+    const p = g.attributes.position, uv = g.attributes.uv;
+    for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + pw / 2) / pw, p.getY(i) / ph);
+    g.translate(0, y0, 0);
+  } else {
+    g = new THREE.PlaneGeometry(pw, ph);
+    g.translate(0, y0 + ph / 2, 0);
+  }
+  g.rotateY(Math.PI / 2);
+  g.translate(lx, 0, 0);
+  return g;
 }
 
 /** 牆面上的拱形板（面向 +x） */
@@ -372,8 +494,11 @@ let X: ExtraMats;
  * 祭台：台階、祭台桌、兩側深色花崗岩柱、檐部，與鍍金框中的祭壇畫。
  * 祭壇畫多為馬賽克複製；此處以深色畫板表示，不仿造畫面。
  */
-function altar(M: Mats, o: { w?: number; h?: number; panel?: THREE.Material; mensa?: boolean; cols?: boolean } = {}) {
-  const w = o.w ?? 5, h = o.h ?? 9, P = new Piece();
+function altar(M: Mats, o: { w?: number; h?: number; panel?: THREE.Material; mensa?: boolean; cols?: boolean; image?: string } = {}) {
+  const w = o.w ?? 5, P = new Piece();
+  // 有真實影像時，畫面高度依影像比例決定
+  const art = o.image ? ART[o.image] : undefined;
+  const h = art?.aspect ? 1.9 + (w - 1.4) / art.aspect + 0.9 : (o.h ?? 9);
   P.add(M.marbleDark, boxAt(0.25, 0, h + 1.2, w + 2.0, 0.12));
   if (o.mensa !== false) {
     P.add(M.marble, boxAt(2.6, 0, 0.3, w + 1.2, 1.3));
@@ -381,7 +506,10 @@ function altar(M: Mats, o: { w?: number; h?: number; panel?: THREE.Material; men
     P.add(M.gold, boxAt(0.05, 0.75, 0.85, Math.min(3.4, w - 0.6) - 0.2, 1.46));
   }
   const pw = w - 1.4;
-  P.add(o.panel ?? X.mosaic, boxAt(0.1, 1.9, h - 0.9, pw, 0.3));
+  if (art) {
+    P.add(M.dark, boxAt(0.1, 1.9, h - 0.9, pw, 0.3));
+    P.addTextured(artMat(o.image!), artPanel(pw, h - 2.8, 1.9, 0.36, !!art.arch));
+  } else P.add(o.panel ?? X.mosaic, boxAt(0.1, 1.9, h - 0.9, pw, 0.3));
   for (const y of [1.65, h - 0.9]) P.add(M.gold, boxAt(0.22, y, y + 0.25, pw + 0.5, 0.36));
   for (const s of [-1, 1]) P.add(M.gold, boxAt(0.22, 1.65, h - 0.65, 0.25, 0.36, s * (pw / 2 + 0.12)));
   if (o.cols !== false) for (const s of [-1, 1]) {
@@ -403,39 +531,15 @@ function tomb(M: Mats, o: { pope: 'seated' | 'kneel' | 'stand'; popeMat: THREE.M
   P.add(o.sarc ?? M.marbleDark, boxAt(1.4, 1.4, 2.7, 3.2, 0.95));
   P.add(M.gold, boxAt(1.45, 2.5, 2.6, 3.25, 0.95));
   P.add(M.marble, boxAt(1.2, 2.7, 3.5, 1.7, 0.75));
-  if (o.pope === 'seated') P.add(o.popeMat, seated(0.75, 3.5, 0, 2.3, 1, 0));
-  else P.add(o.popeMat, figure(o.pope === 'kneel' ? 2 : 0, 0.75, 3.5, 0, o.pope === 'kneel' ? 2.0 : 2.7, 1, 0));
+  if (o.pope === 'seated') P.addSculpt('pope_seated', o.popeMat, 0.8, 3.5, 0, 2.5);
+  else if (o.pope === 'kneel') P.addSculpt('pope_kneel', o.popeMat, 0.8, 3.5, 0, 2.3);
+  else P.add(o.popeMat, figure(0, 0.75, 3.5, 0, 2.7, 1, 0));
   if (o.allegories !== false) for (const s of [-1, 1]) P.add(o.figMat ?? M.marbleWhite, figure(s > 0 ? 1 : 3, 2.1, 0, s * 1.75, 2.6, 1, s * 0.3));
   if (o.skeleton) P.add(M.gilded, figure(3, 1.75, 1.6, 0.6, 1.2, 1, 0));
   return P;
 }
 
-/** 獅子（簡化：臥姿，朝 +x） */
-function lion(P: Piece, mat: THREE.Material, lx: number, lz: number) {
-  const body = new THREE.CapsuleGeometry(0.42, 1.2, 4, 10); body.rotateZ(Math.PI / 2); body.scale(1, 0.75, 1); body.translate(lx - 0.2, 0.4, lz); P.add(mat, body);
-  const head = new THREE.SphereGeometry(0.42, 14, 10); head.translate(lx + 0.75, 0.7, lz); P.add(mat, head);
-  const mane = new THREE.SphereGeometry(0.55, 14, 10); mane.scale(0.7, 1, 1); mane.translate(lx + 0.55, 0.7, lz); P.add(mat, mane);
-}
 
-/** 騎馬像（簡化：揚蹄戰馬與騎者，朝 +x） */
-function equestrian(P: Piece, mat: THREE.Material, S: number, y0: number) {
-  const parts: THREE.BufferGeometry[] = [];
-  const torso = new THREE.CapsuleGeometry(0.36, 1.1, 4, 12); torso.rotateZ(Math.PI / 2); torso.translate(0, 1.35, 0); parts.push(torso);
-  const neck = new THREE.CapsuleGeometry(0.2, 0.6, 4, 8); neck.rotateZ(-0.7); neck.translate(0.85, 1.75, 0); parts.push(neck);
-  const head = new THREE.CapsuleGeometry(0.13, 0.42, 4, 8); head.rotateZ(-1.9); head.translate(1.2, 2.0, 0); parts.push(head);
-  for (const [lx, lz, fr] of [[0.6, 0.18, 1], [0.6, -0.18, 1], [-0.6, 0.18, 0], [-0.6, -0.18, 0]] as [number, number, number][]) {
-    const leg = new THREE.CapsuleGeometry(0.08, 0.95, 4, 6);
-    if (fr) { leg.rotateZ(1.1); leg.translate(lx + 0.35, 1.05, lz); } else leg.translate(lx, 0.6, lz);
-    parts.push(leg);
-  }
-  const tail = new THREE.CapsuleGeometry(0.07, 0.7, 4, 6); tail.rotateZ(0.5); tail.translate(-0.95, 1.05, 0); parts.push(tail);
-  const rider = statueGeometry(1); rider.scale(1.15, 1.15, 1.15); rider.translate(0.05, 1.25, 0); parts.push(rider);
-  const g = mergeAll(parts);
-  g.rotateZ(0.35); // 揚蹄
-  g.scale(S, S, S);
-  g.translate(0, y0 + 0.25 * S, 0);
-  P.add(mat, g);
-}
 
 /** 亞歷山大七世紀念碑（本地座標） */
 function alexanderVII(b: GeoBucket, M: Mats) {
@@ -446,11 +550,19 @@ function alexanderVII(b: GeoBucket, M: Mats) {
   P.add(M.gold, archFrame(3.7, 14.2, 0.35, 0.3, 0.0));
   P.add(M.marbleDark, boxAt(1.6, 0, 1.0, 7.0, 0.8));
   P.add(M.dark, archPanel(1.3, 4.2, 0.06));
-  const drape = new THREE.CylinderGeometry(3.2, 3.5, 4.2, 24, 1, true, 0, Math.PI);
+  // 碧玉帷幔：自門上垂落、帶有深皺褶
+  const drape = new THREE.CylinderGeometry(3.2, 3.5, 4.2, 48, 8, true, 0, Math.PI);
+  const dp = drape.attributes.position as THREE.BufferAttribute;
+  for (let i = 0; i < dp.count; i++) {
+    const vx = dp.getX(i), vy = dp.getY(i), vz = dp.getZ(i);
+    const fold = 1 + 0.08 * Math.sin(Math.atan2(vz, vx) * 14) * (0.4 + 0.6 * (1 - (vy + 2.1) / 4.2));
+    dp.setXYZ(i, vx * fold, vy, vz * fold);
+  }
+  drape.computeVertexNormals();
   drape.scale(0.35, 1, 1); drape.translate(0.2, 6.3, 0);
   P.add(jasper, drape);
   P.add(M.marble, boxAt(1.4, 8.4, 9.8, 3.2, 0.7));
-  P.add(M.marbleWhite, figure(2, 0.7, 9.8, 0, 2.6, 1, 0)); // 跪姿教宗（簡化）
+  P.addSculpt('pope_kneel', M.marbleWhite, 0.7, 9.8, 0, 2.6); // 跪姿教宗
   for (const [dz, v] of [[-2.8, 0], [2.8, 1]] as [number, number][]) P.add(M.marbleWhite, figure(v, 1.4, 1.0, dz, 3.0, 1, -dz * 0.1));
   for (const [dz, v] of [[-1.9, 2], [1.9, 3]] as [number, number][]) P.add(M.marbleWhite, figure(v, 1.0, 8.4, dz, 2.4, 1, -dz * 0.1));
   P.add(M.gilded, figure(3, 0.6, 4.4, 0, 1.6, 1, 0)); // 高舉沙漏的鍍金骷髏（簡化）
@@ -472,18 +584,23 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
   // ── 柱廊 ──
   const PX = IN.naveEnd + IN.wallT, PX1 = IN.porticoX1, pcx = (PX + PX1) / 2;
   {
-    // 菲拉雷特銅門：兩扇門扇向柱廊敞開
-    const th = 1.15;
+    // 菲拉雷特銅門：兩扇門扇向教堂內敞開（外側浮雕面朝柱廊）
+    const th = 0.9;
     for (const s of [-1, 1]) {
       const P = new Piece();
-      P.add(bronze, boxAt(3.0, 0, 8, 0.22));
-      for (let r = 0; r < 3; r++) for (const c of [-0.72, 0.72]) P.add(M.bronze, boxAt(1.2, 0.5 + r * 2.5, 2.7 + r * 2.5, 0.32, c, 0));
-      P.add(M.gilded, boxAt(3.0, 7.75, 8, 0.3));
-      const dir = [Math.sin(th), -s * Math.cos(th)];
+      P.add(bronze, boxAt(3.0, 0, 10.4, 0.22));
+      // 門扇外側貼實拍影像（Brooklyn Museum 藏幻燈片，左右各半；黑白照以青銅色調呈現）
+      const face = new THREE.PlaneGeometry(2.9, 10.3);
+      face.translate(0, 5.15, 0);
+      if (s < 0) face.rotateY(Math.PI);
+      face.translate(0, 0, s * 0.115);
+      P.addTextured(filareteMat(s > 0 ? 'l' : 'r'), face);
+      const dir = [-Math.sin(th), -s * Math.cos(th)];
       P.put(b, PX + dir[0] * 1.5, s * 3 + dir[1] * 1.5, dir[0], dir[1]);
     }
-    // 聖門（柱廊側）：16 格青銅浮雕
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) b.add(M.bronze, boxAt(0.2, 0.5 + r * 1.85, 2.15 + r * 1.85, 0.95, PX + 0.15, -25 + (c - 1.5) * 1.03));
+    // 聖門（柱廊側）：深色青銅門框中嵌 16 格鍍金浮雕（四層、每層四格）
+    b.add(bronze, boxAt(0.18, 0.2, 8.2, 4.4, PX + 0.1, -25));
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) b.add(M.gilded, boxAt(0.12, 0.6 + r * 1.9, 2.2 + r * 1.9, 0.9, PX + 0.24, -25 + (c - 1.5) * 1.04));
     b.add(M.gilded, boxAt(0.25, 8.6, 9.6, 3.2, PX + 0.15, -25));
     // 《小船》馬賽克：中央拱洞上方（立面內側）
     b.add(M.gold, boxAt(0.2, 9.5, 13.0, 8.4, PX1 - 0.1, 0));
@@ -491,7 +608,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     // 君士坦丁（北端，國王階梯腳下）：揚蹄戰馬，身後灰泥帷幔
     const c = new Piece();
     c.add(M.marble, boxAt(4.6, 0, 2.2, 2.4));
-    equestrian(c, M.marbleWhite, 1.55, 2.2);
+    c.addSculpt('equestrian', M.marbleWhite, 0, 2.2, 0, 3.4);
     c.put(b, pcx, -41.5, 0.9, 0.44);
     const drape = new THREE.CylinderGeometry(3.8, 4.1, 9, 24, 1, true, Math.PI * 0.65, Math.PI * 0.7);
     drape.translate(pcx, 6.5, -41.5);
@@ -499,7 +616,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     // 查理曼（南端）
     const ch = new Piece();
     ch.add(M.marble, boxAt(4.6, 0, 2.2, 2.4));
-    equestrian(ch, M.marbleWhite, 1.5, 2.2);
+    ch.addSculpt('equestrian', M.marbleWhite, 0, 2.2, 0, 3.3);
     ch.put(b, pcx, 41.5, 0.9, -0.44);
   }
 
@@ -514,7 +631,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
 
   // ── 左側廊（南，z > 0） ──
   // 洗禮堂：古代紅斑岩洗禮池與鍍金青銅池蓋、祭壇畫
-  { const P = altar(M, { w: 5.6, h: 9.5, mensa: false }); P.put(b, 110, A, 0, -1); }
+  { const P = altar(M, { w: 5.6, h: 9.5, mensa: false, image: 'baptism' }); P.put(b, 110, A, 0, -1); }
   b.add(porphyry, lathe([[0.01, 0], [0.8, 0], [1.0, 0.4], [1.5, 0.75], [1.6, 1.15], [1.45, 1.2]], 32, 110, 28.6));
   b.add(M.gilded, lathe([[1.55, 1.2], [1.2, 1.6], [0.6, 2.2], [0.25, 2.8], [0.1, 3.2], [0.01, 3.35]], 24, 110, 28.6));
   // 斯圖亞特王族紀念碑（Canova）：白色碑、三人肖像、墓門兩側天使
@@ -537,8 +654,8 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     P.put(b, 89, AI, 0, 1);
   }
   // 主顯聖容祭台（聖安德烈柱外側）、克勉禮拜堂聖額我略祭台
-  altar(M, { w: 5.2, h: 10 }).put(b, IN.pierOuter, 25, 1, 0);
-  altar(M, { w: 5.2, h: 9.5 }).put(b, 40, A, 0, -1);
+  altar(M, { w: 5.2, h: 10, image: 'transfiguration' }).put(b, IN.pierOuter, 25, 1, 0);
+  altar(M, { w: 5.2, h: 9.5, image: 'gregory' }).put(b, 40, A, 0, -1);
   // 左側廊其他禮拜堂（獻主禮拜堂、詠禮司鐸禮拜堂）：祭台與鐵門
   altar(M, { w: 5.2, h: 9 }).put(b, 96, A, 0, -1);
   chapelGate(M).put(b, 82, A, 0, -1);
@@ -551,10 +668,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
   // ── 後殿 ──
   // 聖良一世祭台：大理石高浮雕（兩側黑色花崗岩柱）
   {
-    const P = altar(M, { w: 5.6, h: 10.5, panel: M.marbleDark });
-    for (const [dz, v, h] of [[-1.3, 0, 2.6], [0.2, 2, 2.9], [1.5, 1, 2.4]] as [number, number, number][]) {
-      const g = statueGeometry(v); g.scale(0.45 * h, h, h); g.translate(0.55, 2.4, dz); P.add(M.marbleWhite, g);
-    }
+    const P = altar(M, { w: 5.6, image: 'leo' }); // Algardi 大理石浮雕（實拍）
     P.put(b, CH.x0 + 0.3, 44.5, 1, 0); // 圓柱聖母禮拜堂右側
   }
 
@@ -564,7 +678,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
   // ── 後殿轉角禮拜堂（牆厚 0.6 m，構件貼齊牆面 +0.3） ──
   const brocatello = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.55, 0.32, 0.16), roughness: 0.3 });
   // 西南：圓柱聖母禮拜堂一帶
-  altar(M, { w: 5, h: 9.5 }).put(b, -37.5, CH.z0 + 0.3, 0, 1); // 耶穌聖心
+  altar(M, { w: 5, h: 9.5, image: 'sacredheart' }).put(b, -37.5, CH.z0 + 0.3, 0, 1); // 耶穌聖心
   altar(M, { w: 5, h: 9.5 }).put(b, -43.5, CH.z1 - 0.3, 0, -1); // 治癒癱子
   {
     const P = altar(M, { w: 5.4, h: 10 }); // 圓柱聖母：聖像繪於大理石柱段上
@@ -575,8 +689,8 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
   tomb(M, { pope: 'seated', popeMat: bronze }).put(b, CH.corrX - CH.corrHW + 0.3, 23.5, 1, 0); // 亞歷山大八世
   // 西北：聖彌額爾與聖佩特羅尼拉禮拜堂一帶
   tomb(M, { pope: 'seated', popeMat: M.marbleWhite }).put(b, CH.corrX - CH.corrHW + 0.3, -23.5, 1, 0); // 克勉十世
-  altar(M, { w: 5.6, h: 10 }).put(b, CH.x0 + 0.3, -44.5, 1, 0); // 聖佩特羅尼拉（禮拜堂後方）
-  altar(M, { w: 5, h: 9.5 }).put(b, -43.5, -CH.z1 + 0.3, 0, 1); // 聖彌額爾
+  altar(M, { w: 5.6, h: 10, image: 'petronilla' }).put(b, CH.x0 + 0.3, -44.5, 1, 0); // 聖佩特羅尼拉（禮拜堂後方）
+  altar(M, { w: 5, h: 9.5, image: 'michael' }).put(b, -43.5, -CH.z1 + 0.3, 0, 1); // 聖彌額爾
   altar(M, { w: 5, h: 9.5 }).put(b, CH.x1 - 0.3, -40, -1, 0); // 塔比莎
   {
     const P = altar(M, { w: 5, h: 9.5, cols: false }); // 《小船》祭台：兩旁為 brocatello 大理石柱
@@ -589,7 +703,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     const px = apseC - W * Math.cos(th) + 0.25 * Math.cos(th), pz = s * (W * Math.sin(th) - 0.25 * Math.sin(th));
     const P = s > 0
       ? tomb(M, { pope: 'seated', popeMat: bronze, sarc: M.marbleDark })
-      : tomb(M, { pope: 'stand', popeMat: bronze, sarc: X.granite, skeleton: true });
+      : tomb(M, { pope: 'seated', popeMat: bronze, sarc: X.granite, skeleton: true }); // 烏爾巴諾八世：坐姿、舉手祝福
     P.put(b, px, pz, Math.cos(th), -s * Math.sin(th));
   }
 
@@ -602,20 +716,24 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     P.add(M.dark, archPanel(1.0, 2.8, 0.06, 1.0));
     P.add(M.marbleWhite, boxAt(1.2, 1.0, 5.6, 3.6, 0.6));
     P.add(M.marbleWhite, boxAt(1.3, 5.6, 6.6, 2.0, 0.65));
-    P.add(M.marbleWhite, figure(2, 0.7, 6.6, 0, 2.2, 1, 0));
-    for (const s of [-1, 1]) {
-      lion(P, M.marbleWhite, 1.4, s * 1.9);
-      P.add(M.marbleWhite, figure(s > 0 ? 0 : 1, 1.6, 1.0, s * 2.4, 2.6, 1, -s * 0.2));
-    }
+    P.addSculpt('pope_kneel', M.marbleWhite, 0.7, 6.6, 0, 2.3);
+    // 墓門兩側的獅子：面向中央的墓門，觀者左側醒著、右側伏首而眠（依實拍照片）
+    P.addSculpt('lion_awake', M.marbleWhite, 1.15, 1.0, 2.0, 1.9, 0, -1);
+    P.addSculpt('lion_asleep', M.marbleWhite, 1.15, 1.0, -2.0, 1.9, 0, 1);
+    // 獅子後方的高台上：左為手持十字架的「宗教」立像，右為死亡守護神（簡化造型）
+    for (const sz of [-1, 1]) P.add(M.marbleWhite, boxAt(0.9, 1.0, 2.8, 1.5, 0.45, sz * 2.4));
+    P.add(M.marbleWhite, figure(0, 0.5, 2.8, 2.4, 2.6, 1, -0.2));
+    P.add(M.marbleWhite, boxAt(0.06, 2.8, 6.4, 0.06, 0.65, 2.75));
+    P.add(M.marbleWhite, boxAt(0.06, 5.7, 5.78, 0.7, 0.65, 2.75));
+    P.add(M.marbleWhite, figure(1, 0.5, 2.8, -2.4, 2.2, 1, 0.2));
     P.put(b, -W + 0.3, -40, 1, 0);
   }
 
   // ── 右側廊（北，z < 0） ──
   // 聖熱羅尼莫祭台（聖朗基努斯柱背面）、額我略禮拜堂援助聖母祭台
-  altar(M, { w: 5.2, h: 10 }).put(b, IN.pierOuter, -25, 1, 0);
+  altar(M, { w: 5.2, h: 10, image: 'jerome' }).put(b, IN.pierOuter, -25, 1, 0);
   {
-    const P = altar(M, { w: 5.2, h: 9.5 });
-    P.add(M.gold, boxAt(0.15, 4.0, 6.4, 1.8, 0.4)); // 12 世紀木板聖像的鍍金外框
+    const P = altar(M, { w: 5.2, h: 9.5, image: 'succour' }); // 援助聖母：12 世紀木板聖像（實拍含外框）
     P.add(porphyry, boxAt(0.9, 0.35, 1.25, 1.6, 0.85)); // 祭台下的斑岩甕（簡化）
     P.put(b, 40, -A, 0, 1);
   }
@@ -634,7 +752,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
   }
   // 聖塞巴斯蒂安禮拜堂（聖若望保祿二世之墓）與兩側教宗立像
   {
-    const P = altar(M, { w: 5.4, h: 9.5 });
+    const P = altar(M, { w: 5.4, h: 9.5, image: 'sebastian' });
     for (const s of [-1, 1]) {
       P.add(M.marble, boxAt(1.2, 0, 1.6, 1.2, 1.3, s * 4.6));
       P.add(bronze, figure(s > 0 ? 0 : 2, 1.3, 1.6, s * 4.6, 2.8, 1, 0));
@@ -672,7 +790,9 @@ function transeptAltars(b: GeoBucket, M: Mats, sgn: number) {
     const a = (deg * Math.PI) / 180;
     const nx = Math.sin(a), nz = Math.cos(a) * sgn; // 從圓心指向牆
     const x = nx * (W - 0.02), z = sgn * c + nz * (W - 0.02);
-    altar(M, { w: deg === 0 ? 5.8 : 5.0, h: deg === 0 ? 10.5 : 9.5 }).put(b, x, z, -nx, -nz);
+    // 南：中央聖若瑟、東側聖伯多祿倒釘十字架、西側聖多默（無影像）；北：中央聖普羅策素與瑪爾定、西側聖伊拉斯謨、東側聖文策老（無影像）
+    const image = sgn > 0 ? (deg === 0 ? 'joseph' : deg > 0 ? 'crucifixion' : undefined) : (deg === 0 ? 'processus' : deg < 0 ? 'erasmus' : undefined);
+    altar(M, { w: deg === 0 ? 5.8 : 5.0, h: deg === 0 ? 10.5 : 9.5, image }).put(b, x, z, -nx, -nz);
   }
 }
 
