@@ -376,15 +376,20 @@ class Piece {
   add(m: THREE.Material, g: THREE.BufferGeometry) { this.items.push([m, g]); return this; }
   addTextured(m: THREE.Material, g: THREE.BufferGeometry) { this.meshes.push([m, g]); return this; }
   /** 以 tools/sculpt 的模型代替（本地座標；lf 為本地面向，預設 +x） */
-  sculpts: { file: string; mat: THREE.Material; lx: number; ly: number; lz: number; h: number; lfx: number; lfz: number }[] = [];
-  addSculpt(file: string, mat: THREE.Material, lx: number, ly: number, lz: number, h: number, lfx = 1, lfz = 0) { this.sculpts.push({ file, mat, lx, ly, lz, h, lfx, lfz }); return this; }
+  sculpts: { file: string; mat: THREE.Material; lx: number; ly: number; lz: number; h: number; lfx: number; lfz: number; fb?: () => THREE.BufferGeometry }[] = [];
+  /** fb：模型載入失敗時的簡化造型（本地座標，已就位） */
+  addSculpt(file: string, mat: THREE.Material, lx: number, ly: number, lz: number, h: number, lfx = 1, lfz = 0, fb?: () => THREE.BufferGeometry) { this.sculpts.push({ file, mat, lx, ly, lz, h, lfx, lfz, fb }); return this; }
   put(b: GeoBucket, x: number, z: number, fx: number, fz: number, y = 0) {
     const a = Math.atan2(-fz, fx);
     const ca = Math.cos(a), sa = Math.sin(a);
     for (const sc of this.sculpts) {
       const wx = x + sc.lx * ca + sc.lz * sa, wz = z - sc.lx * sa + sc.lz * ca;
       const wfx = sc.lfx * ca + sc.lfz * sa, wfz = -sc.lfx * sa + sc.lfz * ca;
-      SCULPTS.push({ file: sc.file, mat: sc.mat, x: wx, y: y + sc.ly, z: wz, h: sc.h, fx: wfx, fz: wfz, fallback: () => new THREE.BufferGeometry() });
+      const fb = sc.fb;
+      SCULPTS.push({
+        file: sc.file, mat: sc.mat, x: wx, y: y + sc.ly, z: wz, h: sc.h, fx: wfx, fz: wfz,
+        fallback: () => { if (!fb) return new THREE.BufferGeometry(); const g = fb(); g.rotateY(a); g.translate(x, y, z); return g; },
+      });
     }
     this.sculpts = [];
     for (const [m, g] of this.items) { g.rotateY(a); g.translate(x, y, z); b.add(m, g); }
@@ -531,8 +536,8 @@ function tomb(M: Mats, o: { pope: 'seated' | 'kneel' | 'stand'; popeMat: THREE.M
   P.add(o.sarc ?? M.marbleDark, boxAt(1.4, 1.4, 2.7, 3.2, 0.95));
   P.add(M.gold, boxAt(1.45, 2.5, 2.6, 3.25, 0.95));
   P.add(M.marble, boxAt(1.2, 2.7, 3.5, 1.7, 0.75));
-  if (o.pope === 'seated') P.addSculpt('pope_seated', o.popeMat, 0.8, 3.5, 0, 2.5);
-  else if (o.pope === 'kneel') P.addSculpt('pope_kneel', o.popeMat, 0.8, 3.5, 0, 2.3);
+  if (o.pope === 'seated') P.addSculpt('pope_seated', o.popeMat, 0.8, 3.5, 0, 2.5, 1, 0, () => seated(0.75, 3.5, 0, 2.3, 1, 0));
+  else if (o.pope === 'kneel') P.addSculpt('pope_kneel', o.popeMat, 0.8, 3.5, 0, 2.3, 1, 0, () => figure(2, 0.75, 3.5, 0, 2.0, 1, 0));
   else P.add(o.popeMat, figure(0, 0.75, 3.5, 0, 2.7, 1, 0));
   if (o.allegories !== false) for (const s of [-1, 1]) P.add(o.figMat ?? M.marbleWhite, figure(s > 0 ? 1 : 3, 2.1, 0, s * 1.75, 2.6, 1, s * 0.3));
   if (o.skeleton) P.add(M.gilded, figure(3, 1.75, 1.6, 0.6, 1.2, 1, 0));
@@ -562,7 +567,7 @@ function alexanderVII(b: GeoBucket, M: Mats) {
   drape.scale(0.35, 1, 1); drape.translate(0.2, 6.3, 0);
   P.add(jasper, drape);
   P.add(M.marble, boxAt(1.4, 8.4, 9.8, 3.2, 0.7));
-  P.addSculpt('pope_kneel', M.marbleWhite, 0.7, 9.8, 0, 2.6); // 跪姿教宗
+  P.addSculpt('pope_kneel', M.marbleWhite, 0.7, 9.8, 0, 2.6, 1, 0, () => figure(2, 0.7, 9.8, 0, 2.6, 1, 0)); // 跪姿教宗
   for (const [dz, v] of [[-2.8, 0], [2.8, 1]] as [number, number][]) P.add(M.marbleWhite, figure(v, 1.4, 1.0, dz, 3.0, 1, -dz * 0.1));
   for (const [dz, v] of [[-1.9, 2], [1.9, 3]] as [number, number][]) P.add(M.marbleWhite, figure(v, 1.0, 8.4, dz, 2.4, 1, -dz * 0.1));
   P.add(M.gilded, figure(3, 0.6, 4.4, 0, 1.6, 1, 0)); // 高舉沙漏的鍍金骷髏（簡化）
@@ -608,7 +613,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     // 君士坦丁（北端，國王階梯腳下）：揚蹄戰馬，身後灰泥帷幔
     const c = new Piece();
     c.add(M.marble, boxAt(4.6, 0, 2.2, 2.4));
-    c.addSculpt('equestrian', M.marbleWhite, 0, 2.2, 0, 3.4);
+    c.addSculpt('equestrian', M.marbleWhite, 0, 2.2, 0, 3.4, 1, 0, () => equestrianGeo(1.55, 2.2));
     c.put(b, pcx, -41.5, 0.9, 0.44);
     const drape = new THREE.CylinderGeometry(3.8, 4.1, 9, 24, 1, true, Math.PI * 0.65, Math.PI * 0.7);
     drape.translate(pcx, 6.5, -41.5);
@@ -616,7 +621,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     // 查理曼（南端）
     const ch = new Piece();
     ch.add(M.marble, boxAt(4.6, 0, 2.2, 2.4));
-    ch.addSculpt('equestrian', M.marbleWhite, 0, 2.2, 0, 3.3);
+    ch.addSculpt('equestrian', M.marbleWhite, 0, 2.2, 0, 3.3, 1, 0, () => equestrianGeo(1.5, 2.2));
     ch.put(b, pcx, 41.5, 0.9, -0.44);
   }
 
@@ -716,10 +721,10 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     P.add(M.dark, archPanel(1.0, 2.8, 0.06, 1.0));
     P.add(M.marbleWhite, boxAt(1.2, 1.0, 5.6, 3.6, 0.6));
     P.add(M.marbleWhite, boxAt(1.3, 5.6, 6.6, 2.0, 0.65));
-    P.addSculpt('pope_kneel', M.marbleWhite, 0.7, 6.6, 0, 2.3);
+    P.addSculpt('pope_kneel', M.marbleWhite, 0.7, 6.6, 0, 2.3, 1, 0, () => figure(2, 0.7, 6.6, 0, 2.2, 1, 0));
     // 墓門兩側的獅子：面向中央的墓門，觀者左側醒著、右側伏首而眠（依實拍照片）
-    P.addSculpt('lion_awake', M.marbleWhite, 1.15, 1.0, 2.0, 1.9, 0, -1);
-    P.addSculpt('lion_asleep', M.marbleWhite, 1.15, 1.0, -2.0, 1.9, 0, 1);
+    P.addSculpt('lion_awake', M.marbleWhite, 1.15, 1.0, 2.0, 1.9, 0, -1, () => lionGeo(1.15, 1.0, 2.0, 0, -1));
+    P.addSculpt('lion_asleep', M.marbleWhite, 1.15, 1.0, -2.0, 1.9, 0, 1, () => lionGeo(1.15, 1.0, -2.0, 0, 1));
     // 獅子後方的高台上：左為手持十字架的「宗教」立像，右為死亡守護神（簡化造型）
     for (const sz of [-1, 1]) P.add(M.marbleWhite, boxAt(0.9, 1.0, 2.8, 1.5, 0.45, sz * 2.4));
     P.add(M.marbleWhite, figure(0, 0.5, 2.8, 2.4, 2.6, 1, -0.2));
@@ -831,4 +836,36 @@ function founderNiches(b: GeoBucket, M: Mats) {
       P.put(b, x, z, fx, fz);
     }
   }
+}
+
+/** 備援：簡化獅子（臥姿，面向 (fx, fz)），模型載入失敗時使用 */
+function lionGeo(x: number, y: number, z: number, fx: number, fz: number) {
+  const parts: THREE.BufferGeometry[] = [];
+  const body = new THREE.CapsuleGeometry(0.36, 1.0, 4, 10); body.rotateZ(Math.PI / 2); body.scale(1, 0.75, 1); body.translate(-0.15, 0.35, 0); parts.push(body);
+  const head = new THREE.SphereGeometry(0.34, 14, 10); head.translate(0.65, 0.6, 0); parts.push(head);
+  const mane = new THREE.SphereGeometry(0.46, 14, 10); mane.scale(0.7, 1, 1); mane.translate(0.48, 0.6, 0); parts.push(mane);
+  const g = mergeAll(parts);
+  g.rotateY(Math.atan2(-fz, fx));
+  g.translate(x, y, z);
+  return g;
+}
+
+/** 備援：簡化揚蹄戰馬與騎者（面向 +x），模型載入失敗時使用 */
+function equestrianGeo(S: number, y0: number) {
+  const parts: THREE.BufferGeometry[] = [];
+  const torso = new THREE.CapsuleGeometry(0.36, 1.1, 4, 12); torso.rotateZ(Math.PI / 2); torso.translate(0, 1.35, 0); parts.push(torso);
+  const neck = new THREE.CapsuleGeometry(0.2, 0.6, 4, 8); neck.rotateZ(-0.7); neck.translate(0.85, 1.75, 0); parts.push(neck);
+  const head = new THREE.CapsuleGeometry(0.16, 0.45, 4, 8); head.rotateZ(-1.9); head.translate(1.2, 2.0, 0); parts.push(head);
+  for (const [lx, lz, fr] of [[0.6, 0.18, 1], [0.6, -0.18, 1], [-0.6, 0.18, 0], [-0.6, -0.18, 0]] as [number, number, number][]) {
+    const leg = new THREE.CapsuleGeometry(0.08, 0.95, 4, 6);
+    if (fr) { leg.rotateZ(1.1); leg.translate(lx + 0.35, 1.05, lz); } else leg.translate(lx, 0.6, lz);
+    parts.push(leg);
+  }
+  const tail = new THREE.CapsuleGeometry(0.07, 0.7, 4, 6); tail.rotateZ(0.5); tail.translate(-0.95, 1.05, 0); parts.push(tail);
+  const rider = statueGeometry(1); rider.scale(1.15, 1.15, 1.15); rider.translate(0.05, 1.25, 0); parts.push(rider);
+  const g = mergeAll(parts);
+  g.rotateZ(0.35);
+  g.scale(S, S, S);
+  g.translate(0, y0 + 0.25 * S, 0);
+  return g;
 }
