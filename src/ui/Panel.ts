@@ -63,6 +63,7 @@ export class Panel {
     markQ(quality);
 
     $('panel-toggle').addEventListener('click', () => $('panel').classList.toggle('collapsed'));
+    this.sheet();
     $('about-open').addEventListener('click', () => $('about').classList.remove('hidden'));
     $('about-close').addEventListener('click', () => $('about').classList.add('hidden'));
     $('about').addEventListener('click', (e) => { if (e.target === $('about')) $('about').classList.add('hidden'); });
@@ -96,9 +97,52 @@ export class Panel {
     }
   }
 
+  /** 手機底部抽屜：拖曳把手上下拉，放開時依位置與速度停在展開或收合；輕點切換 */
+  private sheet() {
+    const panel = $('panel'), grip = $('sheet-grip');
+    const mobile = () => window.matchMedia('(max-width: 760px)').matches;
+    let startY = 0, startT = 0, base = 0, max = 0, lastY = 0, lastT = 0, vel = 0, moved = false, active = false;
+    const peek = () => grip.offsetHeight;
+    grip.addEventListener('pointerdown', (e) => {
+      if (!mobile()) return;
+      active = true; moved = false;
+      try { grip.setPointerCapture(e.pointerId); } catch { /* 忽略 */ }
+      max = panel.offsetHeight - peek();
+      base = panel.classList.contains('collapsed') ? max : 0;
+      startY = lastY = e.clientY; startT = lastT = performance.now(); vel = 0;
+      panel.classList.add('dragging');
+    });
+    grip.addEventListener('pointermove', (e) => {
+      if (!active) return;
+      const dy = e.clientY - startY;
+      if (Math.abs(dy) > 4) moved = true;
+      const now = performance.now();
+      vel = (e.clientY - lastY) / Math.max(1, now - lastT);
+      lastY = e.clientY; lastT = now;
+      const y = Math.min(max, Math.max(0, base + dy));
+      panel.style.transform = `translateY(${y}px)`;
+    });
+    const end = (e: PointerEvent) => {
+      if (!active) return;
+      active = false;
+      panel.classList.remove('dragging');
+      panel.style.transform = '';
+      if (!moved) { panel.classList.toggle('collapsed'); return; }
+      const y = Math.min(max, Math.max(0, base + (e.clientY - startY)));
+      const collapse = vel > 0.5 ? true : vel < -0.5 ? false : y > max / 2;
+      panel.classList.toggle('collapsed', collapse);
+      void startT;
+    };
+    grip.addEventListener('pointerup', end);
+    grip.addEventListener('pointercancel', end);
+    grip.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); panel.classList.toggle('collapsed'); } });
+  }
+
   showInfo(title: string, text: string) {
     $('info-title').textContent = title;
     $('info-text').textContent = text;
     $('info').classList.remove('hidden');
+    // 手機：顯示說明時收起控制抽屜，讓說明卡停在畫面下方
+    if (window.matchMedia('(max-width: 760px)').matches) $('panel').classList.add('collapsed');
   }
 }

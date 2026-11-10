@@ -42,7 +42,7 @@ export class InteriorUI {
     this.root.innerHTML = `
       <div class="int-top">
         <div class="int-brand"><div class="t1"><span class="zh">聖彼得大教堂</span><span class="en">St. Peter's Basilica</span></div><div class="t2">Interno della Basilica · <span class="zh">線上導覽</span><span class="en">Virtual tour</span></div></div>
-        <div class="int-actions"><button class="int-exit int-lang" id="int-lang">EN</button><button class="int-exit int-menu" id="int-menu"><span class="zh">目錄</span><span class="en">Exhibits</span></button><button class="int-exit" id="int-exit"><span class="zh">返回廣場</span><span class="en">Back to the square</span></button></div>
+        <div class="int-actions"><button class="int-exit int-lang" id="int-lang">EN</button><button class="int-exit int-menu" id="int-menu"><span class="zh">目錄</span><span class="en">Exhibits</span></button><button class="int-exit" id="int-exit"><span class="zh">返回廣場</span><span class="en"><span class="lbl-long">Back to the square</span><span class="lbl-short">Back</span></span></button></div>
       </div>
       <aside class="int-list">
         <div class="int-h"><span class="zh">展品目錄</span><span class="en">Exhibits</span> <span class="int-count">${EXHIBITS.length}</span></div>
@@ -107,7 +107,8 @@ export class InteriorUI {
 
     this.root.querySelector('#int-exit')!.addEventListener('click', () => this.onExit?.());
     // 手機：目錄抽屜、解說卡收合
-    this.root.querySelector('#int-menu')!.addEventListener('click', () => this.root.classList.toggle('drawer-open'));
+    this.root.querySelector('#int-menu')!.addEventListener('click', () => { this.root.classList.toggle('drawer-open'); this.layoutDrawer(); });
+    window.addEventListener('resize', () => this.layoutDrawer());
     this.root.querySelector('#int-fold')!.addEventListener('click', () => this.card.classList.toggle('min'));
     this.root.querySelector('#int-scan')!.addEventListener('click', () => {
       const sc = EXHIBITS[this.current]?.scan;
@@ -168,7 +169,22 @@ export class InteriorUI {
     return me;
   }
 
-  private closeDrawer() { this.root.classList.remove('drawer-open'); }
+  private closeDrawer() { this.root.classList.remove('drawer-open'); this.layoutDrawer(); }
+
+  /** 手機目錄抽屜：從小平面圖下方開始，與平面圖的間距等於平面圖與上方按鈕的間距 */
+  private layoutDrawer() {
+    const list = this.root.querySelector('.int-list') as HTMLElement;
+    list.style.top = ''; list.style.maxHeight = '';
+    if (!this.root.classList.contains('drawer-open') || !window.matchMedia('(max-width: 760px)').matches) return;
+    requestAnimationFrame(() => {
+      const actions = (this.root.querySelector('.int-actions') as HTMLElement).getBoundingClientRect();
+      const map = (this.root.querySelector('#int-map') as HTMLElement).getBoundingClientRect();
+      if (!map.height) return; // 橫向手機不顯示平面圖
+      const gap = Math.max(8, map.top - actions.bottom);
+      list.style.top = `${Math.round(map.bottom + gap)}px`;
+      list.style.maxHeight = 'none';
+    });
+  }
 
   /** 每幀更新小平面圖上的目前位置與朝向 */
   update() {

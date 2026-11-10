@@ -66,13 +66,18 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
 .about-card ul { margin: 0; padding-left: 20px; }
 
 @media (max-width: 760px) {
-  #panel { top: auto; height: 46vh; left: 8px; right: 8px; width: auto; bottom: 8px; }
-  #panel.collapsed { transform: translateY(calc(100% - 8px)); }
-  #panel-toggle { left: auto; right: 12px; top: -30px; width: 40px; height: 26px; border-radius: 8px 8px 0 0; transform: rotate(90deg); }
-  #panel.collapsed #panel-toggle { transform: rotate(-90deg); }
+  /* 手機：底部抽屜，拖曳把手上下拉（類似 iPhone 控制介面） */
+  #panel { top: auto; height: 62vh; left: 8px; right: 8px; width: auto; bottom: 0; flex-direction: column; transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); touch-action: none; }
+  #panel.collapsed { transform: translateY(calc(100% - 34px - env(safe-area-inset-bottom))); }
+  #panel.dragging { transition: none; }
+  #panel-toggle { display: none; }
+  #panel .sheet-grip { display: flex; flex: none; height: 34px; align-items: center; justify-content: center; background: var(--bg); border: 1px solid var(--line); border-bottom: 0; border-radius: 16px 16px 0 0; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); cursor: grab; }
+  #panel .sheet-grip span { width: 40px; height: 5px; border-radius: 3px; background: rgba(241, 234, 219, 0.45); }
+  #panel .panel-body { border-radius: 0; border-top: 0; padding-bottom: calc(10px + env(safe-area-inset-bottom)); touch-action: pan-y; }
   #hint { display: none; }
   #brand .t1 { font-size: 18px; }
-  #info { bottom: calc(46vh + 20px); }
+  /* 說明卡放在下方，緊貼收合後的控制抽屜上緣 */
+  #info { bottom: calc(46px + env(safe-area-inset-bottom)); }
 }
 
 /* ── 教堂內部導覽 ── */
@@ -190,6 +195,15 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
 html[data-lang="en"] .zh, html:not([data-lang="en"]) .en { display: none !important; }
 .lang-row { display: flex; gap: 6px; padding-top: 8px; }
 #hint > .zh, #hint > .en { display: contents; }
+.sheet-grip { display: none; }
 .int-share { color: var(--dim) !important; }
 .int-lang { padding: 8px 12px !important; letter-spacing: 0.05em !important; }
 .int-exit { white-space: nowrap; }
+/* 手機：頂端按鈕縮短，避免超出畫面 */
+.lbl-short { display: none; }
+@media (max-width: 760px) {
+  .lbl-long { display: none; }
+  .lbl-short { display: inline; }
+  .int-actions { gap: 6px; }
+  .int-exit { padding: 7px 11px; }
+}
