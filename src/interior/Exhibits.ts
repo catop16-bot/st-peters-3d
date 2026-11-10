@@ -584,7 +584,6 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     yellow: new THREE.MeshStandardMaterial({ color: new THREE.Color(0.78, 0.6, 0.32), roughness: 0.3 }),
     bronze, porphyry,
   };
-  const navMosaic = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.1, 0.16, 0.2), roughness: 0.4, metalness: 0.3 });
 
   // ── 柱廊 ──
   const PX = IN.naveEnd + IN.wallT, PX1 = IN.porticoX1, pcx = (PX + PX1) / 2;
@@ -608,8 +607,16 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
     for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) b.add(M.gilded, boxAt(0.12, 0.6 + r * 1.9, 2.2 + r * 1.9, 0.9, PX + 0.24, -25 + (c - 1.5) * 1.04));
     b.add(M.gilded, boxAt(0.25, 8.6, 9.6, 3.2, PX + 0.15, -25));
     // 《小船》馬賽克：中央拱洞上方（立面內側）
-    b.add(M.gold, boxAt(0.2, 9.5, 13.0, 8.4, PX1 - 0.1, 0));
-    b.add(navMosaic, boxAt(0.2, 9.75, 12.75, 7.8, PX1 - 0.2, 0));
+    // 弦月形畫面（半橢圓），貼上 19 世紀版畫影像；外圈為鍍金框
+    const lunette = (hw: number, h: number) => { const s = new THREE.Shape(); s.moveTo(-hw, 0); s.lineTo(hw, 0); s.absellipse(0, 0, hw, h, 0, Math.PI, false); return s; };
+    const NW = 6.4, NH = NW / ART.navicella.aspect!, NY = 9.25;
+    const nf = new THREE.ShapeGeometry(lunette(NW / 2 + 0.25, NH + 0.25), 32);
+    nf.rotateY(-Math.PI / 2); nf.translate(PX1 - 0.05, NY - 0.15, 0);
+    b.add(M.gold, nf);
+    const ng = new THREE.ShapeGeometry(lunette(NW / 2, NH), 32);
+    { const p = ng.attributes.position, uv = ng.attributes.uv; for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + NW / 2) / NW, p.getY(i) / NH); }
+    ng.rotateY(-Math.PI / 2); ng.translate(PX1 - 0.1, NY, 0);
+    SCN.add(new THREE.Mesh(ng, artMat('navicella')));
     // 君士坦丁（北端，國王階梯腳下）：揚蹄戰馬，身後灰泥帷幔
     const c = new Piece();
     c.add(M.marble, boxAt(4.6, 0, 2.2, 2.4));
@@ -698,7 +705,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
   altar(M, { w: 5, h: 9.5, image: 'michael' }).put(b, -43.5, -CH.z1 + 0.3, 0, 1); // 聖彌額爾
   altar(M, { w: 5, h: 9.5 }).put(b, CH.x1 - 0.3, -40, -1, 0); // 塔比莎
   {
-    const P = altar(M, { w: 5, h: 9.5, cols: false }); // 《小船》祭台：兩旁為 brocatello 大理石柱
+    const P = altar(M, { w: 5, h: 9.5, cols: false, image: 'navaltar' }); // 《小船》祭台：兩旁為 brocatello 大理石柱
     for (const s of [-1, 1]) P.add(brocatello, cylAt(0.36, 0.32, 1.4, 8.8, 0.8, s * 2.7, 16));
     P.put(b, -37.5, -CH.z0 - 0.3, 0, -1);
   }

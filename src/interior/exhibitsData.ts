@@ -54,9 +54,9 @@ export const EXHIBITS: Exhibit[] = [
   {
     id: 'navicella', zone: 'portico', title: '《小船》馬賽克 Navicella', subtitle: '傳為喬托 · 約 1298 年 · 馬賽克（經大幅修復）',
     text: '描繪耶穌在水面行走、向船上門徒伸手的場景。原本是 Stefaneschi 樞機在 1298 年為舊聖彼得大教堂訂製的作品，後來移到柱廊，位於中央入口上方的弦月面，經過多次修復，今天所見大多是後世重做的部分。',
-    station: [120.5, 1.7, 0], look: [131, 10.5, 0], hotspot: [130, 12.4, 4.8], fov: 55, featured: true,
+    station: [120.5, 1.7, 0], look: [131, 10.8, 0], hotspot: [130, 13.4, 2.4], fov: 55, featured: true,
     sources: [`${SP}/Interior/Navicella/Navicella.htm`],
-    noImage: '喬托《小船》',
+    art: ['navicella'],
   },
   {
     id: 'constantine', zone: 'portico', title: '君士坦丁騎馬像', subtitle: '貝尼尼 · 1654 年受託，1670 年完成',
@@ -287,7 +287,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '位於聖海倫娜巨柱背面，與柱廊上喬托的《小船》是不同作品。描繪在水面上將要下沉的伯多祿向耶穌求救。祭壇畫依 Lanfranco 1628 年完成的壁畫製成馬賽克；兩旁的 brocatello 大理石柱是大教堂中僅有的一對。祭台下有聖曼蘇埃圖斯與聖霍內斯圖斯的聖髑。',
     station: [-37.5, 1.7, -43], look: [-37.5, 5, -33], hotspot: [-35, 9.5, -34], fov: 58,
     sources: [`${SP}/Altars/Navicella/Navicella.htm`],
-    noImage: '《小船》祭台',
+    art: ['navaltar'],
   },
   // ── 右耳堂 ──
   {
