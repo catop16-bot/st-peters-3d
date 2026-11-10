@@ -214,7 +214,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '大教堂後殿一側的轉角禮拜堂，又稱聖良禮拜堂，小穹頂內飾有聖母德敘禱文的圖樣。祭台上的聖母像畫在舊聖彼得大教堂中殿的一根大理石柱上，1607 年保祿五世時安置於此，1645 年加冕；1964 年保祿六世以「教會之母」稱號尊崇她。祭台下的 4 世紀石棺中安放教宗良二世、良三世、良四世的遺骸。',
     station: [-44, 1.7, 40], look: [-33, 5, 40], hotspot: [-34, 9.5, 42.5], fov: 60, featured: true,
     sources: [`${SP}/Altars/ColumnChapel/ColumnChapel.htm`, `${SP}/Altars/OurLadyColumn/OurLadyColumn.htm`],
-    noImage: '圓柱聖母像',
+    art: ['column'],
   },
   {
     id: 'leo', zone: 'swchapel', title: '聖良一世祭台', subtitle: 'Alessandro Algardi · 1646–1653 · 大理石高浮雕',
@@ -280,7 +280,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '描繪宗徒大事錄第 9 章，伯多祿使約培的女門徒塔比莎死而復活。原畫由 Placido Costanzi 繪製，今藏羅馬天使與殉道者聖母大殿；祭台兩旁是灰色花崗岩柱。',
     station: [-44, 1.7, -40], look: [-33, 5, -40], hotspot: [-34, 9.5, -42.5], fov: 58,
     sources: [`${SP}/Altars/StPeter-Tabitha/StPeter-Tabitha.htm`],
-    noImage: '塔比莎祭台',
+    art: ['tabitha'],
   },
   {
     id: 'navaltar', zone: 'nwchapel', title: '《小船》祭台', subtitle: 'Giovanni Lanfranco 原作 · 1726/27 年製成馬賽克',
@@ -301,8 +301,7 @@ export const EXHIBITS: Exhibit[] = [
     text: '中央是聖普羅策素與瑪爾定祭台，馬賽克依 Valentin de Boulogne 的原畫製作（原畫今藏梵蒂岡美術館），祭台下的斑岩甕安放兩位聖人的聖髑。左側是聖伊拉斯謨祭台，馬賽克依普桑（Nicolas Poussin）1628–29 年的原畫製作，原畫同樣藏於梵蒂岡美術館。右側是聖文策老祭台，馬賽克依 Angelo Caroselli 的原畫製作，兩旁另有聖濟利祿與聖默道的馬賽克。',
     station: [0, 1.7, -45], look: [0, 6, -68], hotspot: [-2.5, 11.5, -66.5], fov: 62,
     sources: [`${SP}/Altars/StsProcessus&Martinian/StsProcessus&Martinian.htm`, `${SP}/Altars/StErasmus/StErasmus.htm`, `${SP}/Altars/StWenceslas/StWenceslas.htm`],
-    noImage: '聖文策老祭台',
-    art: ['processus', 'erasmus'],
+    art: ['processus', 'erasmus', 'wenceslas'],
   },
   // ── 中殿右側與右側廊（回程） ──
   {

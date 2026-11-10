@@ -693,9 +693,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
   altar(M, { w: 5, h: 9.5, image: 'sacredheart' }).put(b, -37.5, CH.z0 + 0.3, 0, 1); // 耶穌聖心
   altar(M, { w: 5, h: 9.5 }).put(b, -43.5, CH.z1 - 0.3, 0, -1); // 治癒癱子
   {
-    const P = altar(M, { w: 5.4, h: 10 }); // 圓柱聖母：聖像繪於大理石柱段上
-    P.add(M.marble, boxAt(0.5, 3.0, 8.2, 1.6, 0.55));
-    P.add(M.gold, boxAt(0.25, 4.4, 7.4, 1.9, 0.5));
+    const P = altar(M, { w: 5.4, h: 10, image: 'column' }); // 圓柱聖母：聖像繪於大理石柱段上（實拍）
     P.put(b, CH.x1 - 0.3, 40, -1, 0);
   }
   tomb(M, { pope: 'seated', popeMat: bronze }).put(b, CH.corrX - CH.corrHW + 0.3, 23.5, 1, 0); // 亞歷山大八世
@@ -703,7 +701,7 @@ function buildMore(b: GeoBucket, build: InteriorBuild, bronze: THREE.Material, p
   tomb(M, { pope: 'seated', popeMat: M.marbleWhite }).put(b, CH.corrX - CH.corrHW + 0.3, -23.5, 1, 0); // 克勉十世
   altar(M, { w: 5.6, h: 10, image: 'petronilla' }).put(b, CH.x0 + 0.3, -44.5, 1, 0); // 聖佩特羅尼拉（禮拜堂後方）
   altar(M, { w: 5, h: 9.5, image: 'michael' }).put(b, -43.5, -CH.z1 + 0.3, 0, 1); // 聖彌額爾
-  altar(M, { w: 5, h: 9.5 }).put(b, CH.x1 - 0.3, -40, -1, 0); // 塔比莎
+  altar(M, { w: 5, h: 9.5, image: 'tabitha' }).put(b, CH.x1 - 0.3, -40, -1, 0); // 塔比莎
   {
     const P = altar(M, { w: 5, h: 9.5, cols: false, image: 'navaltar' }); // 《小船》祭台：兩旁為 brocatello 大理石柱
     for (const s of [-1, 1]) P.add(brocatello, cylAt(0.36, 0.32, 1.4, 8.8, 0.8, s * 2.7, 16));
@@ -802,8 +800,8 @@ function transeptAltars(b: GeoBucket, M: Mats, sgn: number) {
     const a = (deg * Math.PI) / 180;
     const nx = Math.sin(a), nz = Math.cos(a) * sgn; // 從圓心指向牆
     const x = nx * (W - 0.02), z = sgn * c + nz * (W - 0.02);
-    // 南：中央聖若瑟、東側聖伯多祿倒釘十字架、西側聖多默（無影像）；北：中央聖普羅策素與瑪爾定、西側聖伊拉斯謨、東側聖文策老（無影像）
-    const image = sgn > 0 ? (deg === 0 ? 'joseph' : deg > 0 ? 'crucifixion' : undefined) : (deg === 0 ? 'processus' : deg < 0 ? 'erasmus' : undefined);
+    // 南：中央聖若瑟、東側聖伯多祿倒釘十字架、西側聖多默（無影像）；北：中央聖普羅策素與瑪爾定、西側聖伊拉斯謨、東側聖文策老
+    const image = sgn > 0 ? (deg === 0 ? 'joseph' : deg > 0 ? 'crucifixion' : undefined) : (deg === 0 ? 'processus' : deg < 0 ? 'erasmus' : 'wenceslas');
     altar(M, { w: deg === 0 ? 5.8 : 5.0, h: deg === 0 ? 10.5 : 9.5, image }).put(b, x, z, -nx, -nz);
   }
 }
