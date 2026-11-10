@@ -832,7 +832,8 @@ function founderNiches(b: GeoBucket, M: Mats) {
       P.add(M.marbleDark, archPanel(1.15, 6.0, 0.03, y0));
       P.add(M.gold, archFrame(1.15, 6.0, 0.22, 0.15, 0.0, y0));
       P.add(M.marble, boxAt(0.8, y0, y0 + 0.45, 1.7, 0.4));
-      P.add(M.marbleWhite, figure(v++ % 4, 0.45, y0 + 0.45, 0, 4.7, 1, 0));
+      const vv = v++ % 4;
+      P.addSculpt(`saint_${vv}`, M.marbleWhite, 0.45, y0 + 0.45, 0, 4.7, 1, 0, () => figure(vv, 0.45, y0 + 0.45, 0, 4.7, 1, 0));
       P.put(b, x, z, fx, fz);
     }
   }

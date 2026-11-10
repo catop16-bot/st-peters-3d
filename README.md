@@ -40,8 +40,19 @@ npm run build      # 輸出靜態網站到 dist/
 ## 影像與雕像
 
 - `public/art/`：祭壇畫、Algardi 浮雕、菲拉雷特銅門的實拍影像（維基共享資源，已裁切）；出處與授權在 `src/interior/credits.ts`，並顯示於解說卡與「關於」頁
-- `tools/sculpt/build.py`：以 Blender 背景模式產生雕像簡化造型（姿勢骨架 + Skin modifier），輸出 `public/models/sculpt/*.glb`（Draco）。重新產生：
+- `tools/sculpt/build.py`：以 Blender 背景模式產生雕像簡化造型（姿勢骨架 + Skin modifier，長袍與斗篷以布料模擬垂落），包括柱廊／立面／創辦人像共用的 4 種通用聖人像（另有 `_lo` 輕量版），輸出 `public/models/sculpt/*.glb`（Draco）。重新產生：
   `/Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python tools/sculpt/build.py -- public/models/sculpt`
+
+## 雙語與分享
+
+- `src/i18n.ts`：中英切換（面板頂端或內部右上角），靜態文字以 `.zh` / `.en` 成對標記，程式字串用 `t(中文, 英文)`；選擇存在 localStorage
+- `src/interior/exhibitsEn.ts`：47 張解說卡的英文版（依相同出處翻譯）
+- 展品網址：`#pieta` 這類 hash 會直接進入教堂並前往該展品；`#interior` 直接進入教堂。解說卡的「分享」按鈕在手機用系統分享、桌面複製連結
+
+## 內部光影
+
+- `src/interior/Reflections.ts`：拋光地面反射（進入時在中殿、交叉部、後殿各拍一次立方體環境，依位置切換；低畫質不啟用）
+- 穹頂馬賽克依實拍參考重做分層；四個帆拱加上大圓章（只表現金框與藍金色塊）
 
 ## 效能與手機
 

@@ -128,6 +128,42 @@ export function buildStatues(specs: StatueSpec[], mat: THREE.Material, group: TH
     im.computeBoundingSphere();
     group.add(im);
     meshes.push(im);
+    upgrade(im, v);
   });
   return meshes;
+}
+
+/**
+ * 以 tools/sculpt 產生的聖人像模型（輕量版、Draco）取代旋轉體人形。
+ * 模型面向 +Z、高度 1；這裡轉成面向 +X 以符合原本的擺放方向。載入失敗時保留原造型。
+ */
+let saintGeos: Promise<THREE.BufferGeometry[]> | null = null;
+function loadSaints() {
+  saintGeos ??= (async () => {
+    const [{ GLTFLoader }, { DRACOLoader }] = await Promise.all([
+      import('three/examples/jsm/loaders/GLTFLoader.js'),
+      import('three/examples/jsm/loaders/DRACOLoader.js'),
+    ]);
+    const loader = new GLTFLoader().setDRACOLoader(new DRACOLoader());
+    return Promise.all([0, 1, 2, 3].map(async (v) => {
+      const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/sculpt/saint_${v}_lo.glb`);
+      let geo: THREE.BufferGeometry | null = null;
+      gltf.scene.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && !geo) geo = m.geometry; });
+      const g = (geo as THREE.BufferGeometry | null)!.clone();
+      g.rotateY(Math.PI / 2);
+      g.computeBoundingSphere();
+      return g;
+    }));
+  })();
+  return saintGeos;
+}
+function upgrade(im: THREE.InstancedMesh, v: number) {
+  setTimeout(() => {
+    loadSaints().then((geos) => {
+      const old = im.geometry;
+      im.geometry = geos[v];
+      old.dispose();
+      im.computeBoundingSphere();
+    }).catch(() => { /* 保留原造型 */ });
+  }, 1500);
 }
