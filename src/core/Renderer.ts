@@ -241,9 +241,8 @@ export class Renderer {
     this.setQuality(this.detectQuality());
   }
 
+  /** 所有裝置預設高畫質；長時間低幀率時再自動降級（見 main.ts） */
   detectQuality(): Quality {
-    const mobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    if (mobile) return 'low';
     return 'high';
   }
 

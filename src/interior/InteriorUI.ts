@@ -33,6 +33,7 @@ export class InteriorUI {
   private dots: SVGCircleElement[] = [];
   private scanViewer: ScanViewer | null = null;
   private current = -1;
+  private expanded = false;
   onExit: (() => void) | null = null;
 
   constructor(private tour: TourController) {
@@ -51,7 +52,7 @@ export class InteriorUI {
       </aside>
       <div class="int-map" id="int-map"></div>
       <div class="int-card hidden" id="int-card">
-        <button class="int-fold" id="int-fold" data-aria-zh="收合解說" data-aria-en="Fold the card">⌄</button>
+        <button class="int-fold" id="int-fold" data-aria-zh="展開或收合介紹" data-aria-en="Show or hide the description"><span class="fold-label"><span class="zh">介紹</span><span class="en">About</span></span><span class="fold-icon">⌄</span></button>
         <div class="int-num" id="int-num"></div>
         <h2 id="int-title"></h2>
         <div class="int-sub" id="int-sub"></div>
@@ -109,7 +110,10 @@ export class InteriorUI {
     // 手機：目錄抽屜、解說卡收合
     this.root.querySelector('#int-menu')!.addEventListener('click', () => { this.root.classList.toggle('drawer-open'); this.layoutDrawer(); });
     window.addEventListener('resize', () => this.layoutDrawer());
-    this.root.querySelector('#int-fold')!.addEventListener('click', () => this.card.classList.toggle('min'));
+    // 解說卡預設收合；使用者展開後，之後的展品維持展開，直到再次收合
+    const toggleCard = () => { this.expanded = !this.expanded; this.card.classList.toggle('min', !this.expanded); };
+    this.root.querySelector('#int-fold')!.addEventListener('click', toggleCard);
+    this.root.querySelector('#int-title')!.addEventListener('click', toggleCard);
     this.root.querySelector('#int-scan')!.addEventListener('click', () => {
       const sc = EXHIBITS[this.current]?.scan;
       if (!sc) return;
@@ -254,7 +258,8 @@ export class InteriorUI {
       line.textContent = t(`${e.noImage}：暫無教堂內實拍或可公開使用的影像，畫板以深色表示。`, `No photo from inside the basilica or openly licensed image of ${NOIMG_EN[e.id] ?? 'this work'} was found, so it is shown as a dark panel.`);
       src.appendChild(line);
     }
-    this.card.classList.remove('hidden', 'min');
+    this.card.classList.remove('hidden');
+    this.card.classList.toggle('min', !this.expanded);
     if (!keepAnim) { this.card.classList.remove('in'); void this.card.offsetWidth; this.card.classList.add('in'); }
     this.list.querySelectorAll('li').forEach((li) => {
       const on = Number((li as HTMLElement).dataset.i) === i;
